@@ -1,3 +1,6 @@
+[![codecov](https://codecov.io/gh/SoftwareVerse/userverse-python-client/branch/main/graph/badge.svg?token=YOUR_TOKEN)](https://codecov.io/gh/SoftwareVerse/userverse-python-client)
+
+
 # userverse-python-client
 
 Python client for the Userverse HTTP server.
@@ -50,3 +53,5 @@ python -m unittest discover -s tests -v
 ## uv run tests
 uv run python -m unittest discover -s tests -v
 ```
+
+
