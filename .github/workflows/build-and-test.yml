@@ -55,9 +55,8 @@ jobs:
           source .venv/bin/activate
           uv run python -m unittest discover -s tests -v
 
-      - name: Upload Coverage Report to Codecov
+      - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
-          name: coverage-report
-          files: coverage_reports/coverage.xml
+          slug: SoftwareVerse/userverse-python-client
