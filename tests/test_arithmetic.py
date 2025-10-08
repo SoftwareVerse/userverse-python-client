@@ -6,7 +6,7 @@ from pathlib import Path
 # Ensure src directory is importable when running tests without installation.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from userverse_python_client import add_numbers
+from userverse_python_client import add_numbers, subtract_numbers
 
 
 class TestArithmetic(unittest.TestCase):
@@ -28,7 +28,7 @@ class TestArithmetic(unittest.TestCase):
         )
         for first, second, expected in cases:
             with self.subTest(first=first, second=second):
-                self.assertTrue(math.isclose(add_numbers(first, second), expected))
+                self.assertTrue(math.isclose(subtract_numbers(first, second), expected))
 
 
 if __name__ == "__main__":  # pragma: no cover
