@@ -20,6 +20,16 @@ class TestArithmetic(unittest.TestCase):
             with self.subTest(first=first, second=second):
                 self.assertTrue(math.isclose(add_numbers(first, second), expected))
 
+    def test_subtract_numbers(self) -> None:
+        cases = (
+            (1, 2, -1),
+            (-1, 1, -2),
+            (2.5, 3.1, -0.6),
+        )
+        for first, second, expected in cases:
+            with self.subTest(first=first, second=second):
+                self.assertTrue(math.isclose(add_numbers(first, second), expected))
+
 
 if __name__ == "__main__":  # pragma: no cover
     unittest.main()
