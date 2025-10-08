@@ -18,6 +18,12 @@ jobs:
         with:
           fetch-depth: 0   # fetch all history & tags
 
+      - name: Sync with remote main (rebase)
+        run: |
+          git fetch origin --tags
+          git checkout main
+          git pull --rebase origin main
+
       - name: Install uv (latest release)
         run: |
           wget -qO- https://astral.sh/uv/install.sh | sh
@@ -95,20 +101,26 @@ jobs:
           git config user.email "github-actions@github.com"
           git commit -am "chore: bump version to v${new_version}" || echo "No changes to commit"
 
-      - name: Create Git Tag
+      - name: Create Git Tag & Push (atomic)
         run: |
+          set -e
           new_tag="v${{ steps.semver.outputs.new_version }}"
-          git tag -a "$new_tag" -m "Release $new_tag"
-          git push origin main
-          git push origin "$new_tag"
+          # Create the tag only if it doesn't already exist (idempotent reruns)
+          if ! git rev-parse -q --verify "refs/tags/$new_tag" >/dev/null; then
+            git tag -a "$new_tag" -m "Release $new_tag"
+          else
+            echo "Tag $new_tag already exists; leaving as-is."
+          fi
+          # Push commit (HEAD) to main and any new annotated tags together
+          git push --force-with-lease origin HEAD:main --follow-tags
 
       - name: Build package
         run: |
           source .venv/bin/activate
           uv build
 
+      # This workflow runs on push to main, not on a tag ref. Publish using secrets directly.
       - name: Publish to PyPI
-        if: startsWith(github.ref, 'refs/tags/')
         run: |
           source .venv/bin/activate
           uv publish --username __token__ --password ${{ secrets.PYPI_TOKEN }}
