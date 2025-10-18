@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: write  # push tags/commits & create releases
@@ -16,7 +17,8 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0   # fetch all history & tags
+          fetch-depth: 0          # fetch all history & tags
+          persist-credentials: true
 
       - name: Sync with remote main (rebase)
         run: |
@@ -57,6 +59,8 @@ jobs:
           files: coverage_reports/coverage.xml
           fail_ci_if_error: true
 
+      # --- versioning & notes ---
+
       - name: Determine Version Bump
         id: version
         run: |
@@ -74,6 +78,7 @@ jobs:
         run: |
           git fetch --tags --force
           latest_tag=$(git tag --sort=-v:refname | head -n 1)
+          echo "Latest tag: ${latest_tag:-<none>}"
           echo "tag=${latest_tag}" >> "$GITHUB_OUTPUT"
 
       - name: Calculate Next Version
@@ -91,43 +96,65 @@ jobs:
             patch) new_version="$major.$minor.$((patch + 1))" ;;
           esac
 
+          echo "current=$current"
           echo "new_version=$new_version" >> "$GITHUB_OUTPUT"
+
+      - name: Generate Release Notes (commits since last tag)
+        id: notes
+        run: |
+          prev="${{ steps.get_tag.outputs.tag }}"
+          echo "# Release notes for v${{ steps.semver.outputs.new_version }}" > release_notes.md
+          echo "" >> release_notes.md
+          if [ -z "$prev" ]; then
+            echo "Initial release (no previous tag)." >> release_notes.md
+            echo "" >> release_notes.md
+            git log --no-merges --pretty=format:'- %s (%h) by %an' >> release_notes.md
+          else
+            echo "Changes since ${prev}:" >> release_notes.md
+            echo "" >> release_notes.md
+            git log "${prev}..HEAD" --no-merges --pretty=format:'- %s (%h) by %an' >> release_notes.md
+          fi
+          echo "---"
+          cat release_notes.md
+          # Escape for multiline output
+          notes=$(awk '{printf "%s\\n", $0}' release_notes.md)
+          echo "notes=$notes" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Git credentials for tagging/pushing
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@github.com"
+          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
 
       - name: Update version in pyproject.toml
         run: |
           new_version=${{ steps.semver.outputs.new_version }}
           sed -i -E '/^\[project\]/,/^\[.*\]/ s/^version = ".*"/version = "'"$new_version"'"/' pyproject.toml
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git commit -am "chore: bump version to v${new_version}" || echo "No changes to commit"
+          git add pyproject.toml
+          git commit -m "chore: bump version to v${new_version}" || echo "No changes to commit"
 
-      - name: Create Git Tag & Push (atomic)
+      - name: Create Annotated Tag with Release Notes
         run: |
-          set -e
           new_tag="v${{ steps.semver.outputs.new_version }}"
-          # Create the tag only if it doesn't already exist (idempotent reruns)
-          if ! git rev-parse -q --verify "refs/tags/$new_tag" >/dev/null; then
-            git tag -a "$new_tag" -m "Release $new_tag"
-          else
-            echo "Tag $new_tag already exists; leaving as-is."
-          fi
-          # Push commit (HEAD) to main and any new annotated tags together
-          git push --force-with-lease origin HEAD:main --follow-tags
+          {
+            echo "Release ${new_tag}"
+            echo
+            cat release_notes.md
+          } > TAG_MSG.txt
+          # Recreate tag locally to avoid failures on reruns
+          git tag -d "$new_tag" 2>/dev/null || true
+          git tag -a "$new_tag" -F TAG_MSG.txt
+
+      - name: Push main and tag (atomic-ish)
+        run: |
+          git push origin main
+          git push origin "v${{ steps.semver.outputs.new_version }}"
+
+      # --- build & publish ---
 
       - name: Build package
         run: |
           source .venv/bin/activate
           uv build
 
-      # This workflow runs on push to main, not on a tag ref. Publish using secrets directly.
-      - name: Publish to PyPI
-        run: |
-          source .venv/bin/activate
-          uv publish --username __token__ --password ${{ secrets.PYPI_TOKEN }}
-
-      - name: Create GitHub Release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          new_tag="v${{ steps.semver.outputs.new_version }}"
-          gh release create "$new_tag" --title "$new_tag" --notes "Automated release for $new_tag"
+      - name: Pub
