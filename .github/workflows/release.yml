@@ -20,12 +20,7 @@ jobs:
           fetch-depth: 0          # fetch all history & tags
           persist-credentials: true
 
-      - name: Sync with remote main (rebase)
-        run: |
-          git fetch origin --tags
-          git checkout main
-          git pull --rebase origin main
-
+      # ---- build & test first ----
       - name: Install uv (latest release)
         run: |
           wget -qO- https://astral.sh/uv/install.sh | sh
@@ -59,8 +54,7 @@ jobs:
           files: coverage_reports/coverage.xml
           fail_ci_if_error: true
 
-      # --- versioning & notes ---
-
+      # ---- versioning & release notes ----
       - name: Determine Version Bump
         id: version
         run: |
@@ -85,7 +79,10 @@ jobs:
         id: semver
         run: |
           current=${{ steps.get_tag.outputs.tag }}
-          if [ -z "$current" ]; then current="v0.1.0"; fi
+          # default when no tag exists
+          if [ -z "$current" ]; then
+            current="v0.1.0"
+          fi
 
           IFS='.' read -r major minor patch <<<"${current#v}"
           bump=${{ steps.version.outputs.bump }}
@@ -116,11 +113,11 @@ jobs:
           fi
           echo "---"
           cat release_notes.md
-          # Escape for multiline output
+          # escape for multi-line output variable
           notes=$(awk '{printf "%s\\n", $0}' release_notes.md)
           echo "notes=$notes" >> "$GITHUB_OUTPUT"
 
-      - name: Set up Git credentials for tagging/pushing
+      - name: Set up Git credentials (for commit & tag push)
         run: |
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
@@ -141,20 +138,34 @@ jobs:
             echo
             cat release_notes.md
           } > TAG_MSG.txt
-          # Recreate tag locally to avoid failures on reruns
+          # Recreate locally in case of rerun
           git tag -d "$new_tag" 2>/dev/null || true
           git tag -a "$new_tag" -F TAG_MSG.txt
 
-      - name: Push main and tag (atomic-ish)
+      - name: Push main and tag
         run: |
           git push origin main
           git push origin "v${{ steps.semver.outputs.new_version }}"
 
-      # --- build & publish ---
-
+      # ---- build & publish ----
       - name: Build package
         run: |
           source .venv/bin/activate
           uv build
 
-      - name: Pub
+      # We’re running on push to main, so publish explicitly (not tag-triggered)
+      - name: Publish to PyPI
+        run: |
+          source .venv/bin/activate
+          uv publish --username __token__ --password ${{ secrets.PYPI_TOKEN }}
+
+      - name: Create/Update GitHub Release (with notes)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          new_tag="v${{ steps.semver.outputs.new_version }}"
+          if gh release view "$new_tag" >/dev/null 2>&1; then
+            gh release edit "$new_tag" --title "$new_tag" --notes-file release_notes.md
+          else
+            gh release create "$new_tag" --title "$new_tag" --notes-file release_notes.md
+          fi
