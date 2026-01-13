@@ -1,4 +1,4 @@
-from generic_models.app_error import AppErrorResponseModel
+from sverse_generic_models.app_error import AppErrorResponseModel
 
 
 class AppClientError(Exception):

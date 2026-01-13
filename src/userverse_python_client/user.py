@@ -1,6 +1,6 @@
 import base64
 from .http_client_base import BaseClient
-from generic_models.generic_response import GenericResponseModel
+from sverse_generic_models.generic_response import GenericResponseModel
 from userverse_models.user.user import (
     UserLoginModel,
     UserUpdateModel,

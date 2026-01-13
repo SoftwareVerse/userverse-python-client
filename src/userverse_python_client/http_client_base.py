@@ -1,7 +1,7 @@
 import requests
 from typing import Any, Dict, Optional
 
-from generic_models.app_error import AppErrorResponseModel, DetailModel
+from sverse_generic_models.app_error import AppErrorResponseModel, DetailModel
 from .client_error import AppClientError
 from .response_messages import Errors
 
