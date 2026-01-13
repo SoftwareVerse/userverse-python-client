@@ -1,5 +1,5 @@
 import base64
-from .http_client_base import BaseClient
+
 from sverse_generic_models.generic_response import GenericResponseModel
 from userverse_models.user.user import (
     UserLoginModel,
@@ -9,6 +9,7 @@ from userverse_models.user.user import (
     TokenResponseModel,
     UserQueryParams,
 )
+from .http_client_base import BaseClient
 
 
 class UverseUserClient(BaseClient):
@@ -28,13 +29,15 @@ class UverseUserClient(BaseClient):
 
         # Userverse login uses Basic Auth with a PATCH request.
         response = self._request("PATCH", "/user/login", headers=headers)
-        
+
         if not response or "data" not in response:
             raise ValueError("Invalid response from login endpoint")
 
         return GenericResponseModel[TokenResponseModel].model_validate(response)
 
-    def create_user(self, user_data: UserCreateModel) -> GenericResponseModel[UserReadModel]:
+    def create_user(
+        self, user_data: UserCreateModel
+    ) -> GenericResponseModel[UserReadModel]:
         """Creates a new user with the provided data and returns the user model."""
         response = self._request("POST", "/user", json=user_data)
 

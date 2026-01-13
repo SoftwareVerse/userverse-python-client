@@ -17,8 +17,6 @@ from userverse_python_client.user import UverseUserClient
 from userverse_python_client.client_error import AppClientError
 
 
-
-
 def test_user_login():
     """Test user login functionality."""
     user_client = UverseUserClient(base_url="https://apps.oxillium-api.co.za/userverse")
