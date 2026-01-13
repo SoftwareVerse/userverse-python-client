@@ -1,9 +1,9 @@
 import requests
 from typing import Any, Dict, Optional
 
-# Todo: create models for those imports
-from .models.enums import Errors
-from .models.exceptions import AppError
+from generic_models.app_error import AppErrorResponseModel, DetailModel
+from .client_error import AppClientError
+from .response_messages import Errors
 
 
 class BaseClient:
@@ -27,10 +27,6 @@ class BaseClient:
             self.set_access_token(access_token)
 
     def set_access_token(self, token: str) -> None:
-        """
-        Update (or add) the Authorization header for all future requests.
-        """
-        # note: 'bearer' lowercase is fine, but either works
         self.session.headers["Authorization"] = f"bearer {token}"
 
     def _request(
@@ -45,6 +41,7 @@ class BaseClient:
             raise ValueError("Path must start with '/'")
 
         url = f"{self.base_url}{path}"
+
         try:
             resp = self.session.request(
                 method=method,
@@ -54,27 +51,60 @@ class BaseClient:
                 headers=headers,
                 timeout=self.timeout,
             )
-            # this will raise requests.exceptions.HTTPError for 4xx/5xx
             resp.raise_for_status()
+
+            # If API can return empty body (204 etc.), guard it:
+            if not resp.content:
+                return None
+
             return resp.json()
 
         except requests.exceptions.HTTPError as http_err:
-            # http_err.response is the Response object
-            status = http_err.response.status_code
-            content = (
-                http_err.response.json() if http_err.response.content else "No content"
-            )
-            # re-wrap or re-raise, embedding status/content if you like
-            raise AppError(
-                status_code=status,
-                message=Errors.INVALID_REQUEST_MESSAGE.value,
-                error=content,
-            ) from http_err
+            status = http_err.response.status_code if http_err.response else 500
 
-        except Exception as e:
-            # fallback for non-HTTP errors (network issues, timeouts, etc.)
-            raise AppError(
-                status_code=500,
-                message=Errors.INVALID_REQUEST_MESSAGE.value,
-                error=str(e),
-            ) from e
+            err_def = Errors.INVALID_REQUEST.value
+            payload = None
+
+            if http_err.response is not None and http_err.response.content:
+                try:
+                    server_error = http_err.response.json()
+                except ValueError:
+                    server_error = http_err.response.text
+
+                if isinstance(server_error, dict) and "detail" in server_error:
+                    detail = server_error.get("detail")
+                    if isinstance(detail, dict):
+                        payload = AppErrorResponseModel(
+                            detail=DetailModel(
+                                message=detail.get("message", err_def.message),
+                                error=str(detail.get("error", "No content")),
+                            )
+                        )
+                if payload is None:
+                    payload = AppErrorResponseModel(
+                        detail=DetailModel(
+                            message=err_def.message,
+                            error=str(server_error),
+                        )
+                    )
+
+            if payload is None:
+                payload = AppErrorResponseModel(
+                    detail=DetailModel(
+                        message=err_def.message,
+                        error="No content",
+                    )
+                )
+
+            raise AppClientError(status_code=status, payload=payload) from http_err
+
+        except requests.exceptions.RequestException as req_err:
+            # timeouts, DNS, connection errors, etc.
+            err_def = Errors.INVALID_REQUEST.value
+            payload = AppErrorResponseModel(
+                detail=DetailModel(
+                    message=err_def.message,
+                    error=str(req_err),
+                )
+            )
+            raise AppClientError(status_code=500, payload=payload) from req_err
