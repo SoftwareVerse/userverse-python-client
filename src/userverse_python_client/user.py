@@ -36,10 +36,13 @@ class UverseUserClient(BaseClient):
         return GenericResponseModel[TokenResponseModel].model_validate(response)
 
     def create_user(
-        self, user_data: UserCreateModel
+        self, user_data: UserCreateModel, user_credentials: UserLoginModel,
     ) -> GenericResponseModel[UserReadModel]:
-        """Creates a new user with the provided data and returns the user model."""
-        response = self._request("POST", "/user", json=user_data)
+        """Creates a new user with the provided data and Basic Auth, returns the user model."""
+        basic_auth = self._encode_basic_auth(user_credentials.email, user_credentials.password)
+        headers = {"Authorization": basic_auth}
+
+        response = self._request("POST", "/user", json=user_data, headers=headers)
 
         if not response or "data" not in response:
             raise ValueError("Invalid response from create user endpoint")
@@ -51,10 +54,68 @@ class UverseUserClient(BaseClient):
         return GenericResponseModel[UserReadModel].model_validate(response)
 
     def get_user(self) -> GenericResponseModel[UserReadModel]:
-        """Retrieves the current user's details."""
+        """Retrieves the current user's details. JWT token must be set in the client."""
         response = self._request("GET", "/user/get")
         if not response:
             raise ValueError("No user data found in response")
         if not isinstance(response, dict):
             raise ValueError(f"Expected user data to be a dict, got {type(response)}")
         return GenericResponseModel[UserReadModel].model_validate(response)
+    
+    def update_user(
+        self, user_update: UserUpdateModel
+    ) -> GenericResponseModel[UserReadModel]:
+        """Updates the current user's details. JWT token must be set in the client."""
+        response = self._request("PUT", "/user/update", json=user_update)
+        if not response:
+            raise ValueError("No user data found in response")
+        if not isinstance(response, dict):
+            raise ValueError(f"Expected user data to be a dict, got {type(response)}")
+        return GenericResponseModel[UserReadModel].model_validate(response)
+    
+    # Account verification methods
+    def resend_verification_email(self) -> GenericResponseModel[None]:
+        """Resends the verification email to current user. JWT token must be set in the client."""
+        response = self._request("POST", "/user/resend-verification")
+        if not response:
+            raise ValueError("No data found in response")
+        if not isinstance(response, dict):
+            raise ValueError(f"Expected response data to be a dict, got {type(response)}")
+        return GenericResponseModel[None].model_validate(response)
+    
+    def verify_user(self, token:str) -> GenericResponseModel[None]:
+        """Verifies the current user's email. Token sent via email."""
+        response = self._request("GET", "/user/verify?token=" + token)
+        if not response:
+            raise ValueError("No data found in response")
+        if not isinstance(response, dict):
+            raise ValueError(f"Expected response data to be a dict, got {type(response)}")
+        return GenericResponseModel[None].model_validate(response)
+    
+    # Password reset methods
+    def request_password_reset(self, email: str) -> GenericResponseModel[None]:
+        """Requests a password reset email to be sent to the user."""
+        response = self._request("PATCH", "/user/password-reset/request?email=" +email)
+        if not response:
+            raise ValueError("No data found in response")
+        if not isinstance(response, dict):
+            raise ValueError(f"Expected response data to be a dict, got {type(response)}")
+        return GenericResponseModel[None].model_validate(response)
+
+
+    def reset_password(
+        self, user_credentials: UserLoginModel, one_time_pin: str
+    ) -> GenericResponseModel[None]:
+        """Resets the user's password using OTP and Basic Auth."""
+        basic_auth = self._encode_basic_auth(user_credentials.email, user_credentials.password)
+        headers = {"Authorization": basic_auth}
+        json_body = {"one_time_pin": one_time_pin}
+
+        response = self._request("PATCH", "/user/password-reset/confirm", json=json_body, headers=headers)
+
+        if not response:
+            raise ValueError("No data found in response")
+        if not isinstance(response, dict):
+            raise ValueError(f"Expected response data to be a dict, got {type(response)}")
+
+        return GenericResponseModel[None].model_validate(response)
