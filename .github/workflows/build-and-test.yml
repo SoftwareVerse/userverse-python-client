@@ -1,7 +1,10 @@
 name: CI - Integration Tests with uv
 
 on:
-  push:
+  # push:
+  #   branches: [main]
+
+  pull_request:
     branches: [main]
 
 permissions:
@@ -44,17 +47,31 @@ jobs:
           git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
 
       - name: Commit and Push formatting changes
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        env:
+          BRANCH_NAME: ${{ github.head_ref }}
         run: |
-          git pull
-          git add .
-          git diff --quiet && git diff --staged --quiet || git commit -m "style: auto-format code with Black"
-          git push origin HEAD:${{ github.ref_name }}
+          echo "Pushing to PR branch: ${BRANCH_NAME}"
 
-      - name: Run tests with coverage (unittest)
+          # Ensure we have the branch locally (checkout in PR runs can be detached)
+          git fetch origin "${BRANCH_NAME}:${BRANCH_NAME}"
+          git checkout "${BRANCH_NAME}"
+          git pull origin "${BRANCH_NAME}"
+
+          git add .
+          if ! git diff --cached --quiet; then
+            git commit -m "style: auto-format code with Black"
+            git push origin "${BRANCH_NAME}"
+          else
+            echo "No formatting changes to commit"
+          fi
+
+
+      - name: Run tests with coverage (pytest)
         run: |
           source .venv/bin/activate
-          uv pip install coverage
-          coverage run -m unittest discover -s tests -v
+          uv pip install coverage pytest
+          coverage run -m pytest
           mkdir -p coverage_reports
           coverage xml -o coverage_reports/coverage.xml
           coverage report -m
