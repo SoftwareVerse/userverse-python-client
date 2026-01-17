@@ -1,4 +1,5 @@
 import base64
+from pydantic import EmailStr
 
 from sverse_generic_models.generic_response import GenericResponseModel
 from userverse_models.user.user import (
@@ -66,7 +67,7 @@ class UverseUserClient(BaseClient):
         self, user_update: UserUpdateModel
     ) -> GenericResponseModel[UserReadModel]:
         """Updates the current user's details. JWT token must be set in the client."""
-        response = self._request("PUT", "/user/update", json=user_update)
+        response = self._request("PATCH", "/user/update", json=user_update)
         if not response:
             raise ValueError("No user data found in response")
         if not isinstance(response, dict):
@@ -93,9 +94,9 @@ class UverseUserClient(BaseClient):
         return GenericResponseModel[None].model_validate(response)
     
     # Password reset methods
-    def request_password_reset(self, email: str) -> GenericResponseModel[None]:
+    def request_password_reset(self, email: EmailStr) -> GenericResponseModel[None]:
         """Requests a password reset email to be sent to the user."""
-        response = self._request("PATCH", "/user/password-reset/request?email=" +email)
+        response = self._request("PATCH", "/password-reset/request?email=" +email)
         if not response:
             raise ValueError("No data found in response")
         if not isinstance(response, dict):
@@ -103,7 +104,7 @@ class UverseUserClient(BaseClient):
         return GenericResponseModel[None].model_validate(response)
 
 
-    def reset_password(
+    def reset_password_validate_otp(
         self, user_credentials: UserLoginModel, one_time_pin: str
     ) -> GenericResponseModel[None]:
         """Resets the user's password using OTP and Basic Auth."""
@@ -111,7 +112,7 @@ class UverseUserClient(BaseClient):
         headers = {"Authorization": basic_auth}
         json_body = {"one_time_pin": one_time_pin}
 
-        response = self._request("PATCH", "/user/password-reset/confirm", json=json_body, headers=headers)
+        response = self._request("PATCH", "/password-reset/validate-otp", json=json_body, headers=headers)
 
         if not response:
             raise ValueError("No data found in response")
