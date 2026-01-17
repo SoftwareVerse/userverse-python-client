@@ -3,7 +3,9 @@ from sverse_generic_models.app_error import AppErrorResponseModel, DetailModel
 
 
 def test_app_client_error_includes_detail_error():
-    payload = AppErrorResponseModel(detail=DetailModel(message="Bad request", error="missing"))
+    payload = AppErrorResponseModel(
+        detail=DetailModel(message="Bad request", error="missing")
+    )
     err = AppClientError(status_code=400, payload=payload)
     assert err.status_code == 400
     assert err.payload == payload
@@ -12,6 +14,8 @@ def test_app_client_error_includes_detail_error():
 
 
 def test_app_client_error_without_detail_error():
-    payload = AppErrorResponseModel(detail=DetailModel(message="Bad request", error=None))
+    payload = AppErrorResponseModel(
+        detail=DetailModel(message="Bad request", error=None)
+    )
     err = AppClientError(status_code=400, payload=payload)
     assert "Bad request" == str(err)
