@@ -57,7 +57,7 @@ def test_request_wraps_http_error_with_detail_payload():
     def fake_request(**_kwargs):
         return FakeResponse(
             status_code=400,
-            content=b"{\"detail\": {\"message\": \"Nope\", \"error\": \"bad\"}}",
+            content=b'{"detail": {"message": "Nope", "error": "bad"}}',
             json_data={"detail": {"message": "Nope", "error": "bad"}},
         )
 

@@ -112,10 +112,14 @@ def run_action(action_name: str, fn, client: UverseUserClient) -> bool:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Userverse user demo")
-    parser.add_argument("--login", action="store_true", help="Login and set access token")
+    parser.add_argument(
+        "--login", action="store_true", help="Login and set access token"
+    )
     parser.add_argument("--create-user", action="store_true", help="Create a new user")
     parser.add_argument("--get-user", action="store_true", help="Fetch current user")
-    parser.add_argument("--update-user", action="store_true", help="Update current user")
+    parser.add_argument(
+        "--update-user", action="store_true", help="Update current user"
+    )
     parser.add_argument(
         "--resend-verification",
         action="store_true",
@@ -154,9 +158,19 @@ def main() -> None:
         ("Create User", args.create_user, create_user, False),
         ("Get User", args.get_user, get_user, True),
         ("Update User", args.update_user, update_user, True),
-        ("Resend Verification", args.resend_verification, resend_verification_email, True),
+        (
+            "Resend Verification",
+            args.resend_verification,
+            resend_verification_email,
+            True,
+        ),
         ("Verify User", args.verify_user, verify_user, False),
-        ("Request Password Reset", args.request_password_reset, request_password_reset, False),
+        (
+            "Request Password Reset",
+            args.request_password_reset,
+            request_password_reset,
+            False,
+        ),
         ("Reset Password", args.reset_password, reset_password, False),
     ]
 

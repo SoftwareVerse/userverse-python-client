@@ -11,7 +11,9 @@ def _basic_auth(email: str, password: str) -> str:
 
 def test_encode_basic_auth():
     client = UverseUserClient("https://example.test")
-    assert client._encode_basic_auth("a@example.com", "pw") == _basic_auth("a@example.com", "pw")
+    assert client._encode_basic_auth("a@example.com", "pw") == _basic_auth(
+        "a@example.com", "pw"
+    )
 
 
 def test_user_login_uses_basic_auth_and_patch():
