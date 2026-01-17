@@ -24,34 +24,28 @@ uv pip install -e .
 ```
 ## Usage
 
-The package currently exposes a greeting helper and a simple arithmetic function. The example below prints both results:
+The main package is `userverse_python_client`, which exposes `UverseUserClient`:
 
 ```python
-from userverse_python_client import add_numbers, hello
+from userverse_python_client import UverseUserClient
 
-print(hello())
-print(add_numbers(1.5, 2.5))
+client = UverseUserClient(base_url="https://api.example.com")
 ```
 
-You can also run the bundled example module:
+## Demo
+
+The runnable demo lives in `examples/user_demo.py`. See `examples/user_demo_README.md`
+for flags and environment variables:
 
 ```bash
-python examples/demo.py
-
-##uv run
-uv run python examples/demo.py
+uv run -m examples.user_demo --help
 ```
-
 
 ## Tests
 
 Run the unit tests with:
 
 ```bash
-python -m unittest discover -s tests -v
-
-## uv run tests
-uv run python -m unittest discover -s tests -v
+pytest
 ```
-
 
