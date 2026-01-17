@@ -53,6 +53,19 @@ Available flags
 - --reset-password
 - --all
 
+Client methods covered
+
+The demo exercises every public method on `UverseUserClient`:
+
+- user_login (login, sets JWT)
+- create_user (create user with Basic Auth)
+- get_user (JWT required)
+- update_user (JWT required)
+- resend_verification_email (JWT required)
+- verify_user (email verification token)
+- request_password_reset (send reset email)
+- reset_password_validate_otp (confirm reset with OTP + new password)
+
 Environment variables
 
 Login:
@@ -82,3 +95,10 @@ Password reset confirm:
 - RESET_EMAIL
 - RESET_NEW_PASSWORD
 - RESET_OTP
+
+Notes
+
+- Actions marked "JWT required" need `--login` so the client has a token.
+- `--verify-user` uses the `VERIFY_TOKEN` from the verification email.
+- `--reset-password` calls `reset_password_validate_otp` with the email and new
+  password (Basic Auth) plus the OTP code.
