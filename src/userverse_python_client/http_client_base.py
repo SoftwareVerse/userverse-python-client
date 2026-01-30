@@ -27,7 +27,7 @@ class BaseClient:
             self.set_access_token(access_token)
 
     def set_access_token(self, token: str) -> None:
-        self.session.headers["Authorization"] = f"bearer {token}"
+        self.session.headers["Authorization"] = f"Bearer {token}"
 
     def _request(
         self,
@@ -57,7 +57,10 @@ class BaseClient:
             if not resp.content:
                 return None
 
-            return resp.json()
+            try:
+                return resp.json()
+            except ValueError:
+                return resp.text
 
         except requests.exceptions.HTTPError as http_err:
             status = http_err.response.status_code if http_err.response else 500
