@@ -29,23 +29,14 @@ Python client for the Userverse HTTP server.
 
 ## Installation
 
-Create and activate a virtual environment, then install the project in editable mode:
-
-## linux configuration
+Install from PyPI:
 
 ```bash
-uv venv
-source .venv\Scripts\activate
-uv pip install -e .
+python -m pip install userverse-python-client
 ```
 
-## windows configuration
-
-```bash
-uv venv
-.venv\Scripts\activate
-uv pip install -e .
-```
+For editable installs from source, see the repository README:
+https://github.com/SoftwareVerse/userverse-python-client#installation
 
 ## Usage
 
@@ -59,12 +50,17 @@ client = UverseUserClient(base_url="https://api.example.com")
 
 ## Demo
 
-The runnable demo lives in `examples/user_demo.py`. See `examples/user_demo_README.md`
-for flags and environment variables:
+The runnable demo lives in:
+https://github.com/SoftwareVerse/userverse-python-client/blob/main/examples/user_demo.py
 
-```bash
-uv run -m examples.user_demo --help
-```
+See the demo README for flags and environment variables:
+https://github.com/SoftwareVerse/userverse-python-client/blob/main/examples/user_demo_README.md
+
+## Developing Clients in Other Languages
+
+See the guide for a summary of the Python client architecture and a plan for
+implementing SDKs in other languages:
+https://github.com/SoftwareVerse/userverse-python-client/blob/main/docs/other-language-clients.md
 
 ## Tests
 
@@ -73,4 +69,3 @@ Run the unit tests with:
 ```bash
 pytest
 ```
-

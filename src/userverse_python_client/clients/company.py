@@ -47,14 +47,15 @@ class UverseCompanyClient(BaseClient):
         email: Optional[EmailStr] = None,
     ) -> GenericResponseModel[CompanyReadModel]:
         """Fetches a company by its ID or email."""
+        params = None
         if company_id is not None:
-            path = f"/company?company_id={company_id}"
+            params = {"company_id": company_id}
         elif email is not None:
-            path = f"/company?email={email}"
+            params = {"email": email}
         else:
             raise ValueError("Either company_id or email must be provided")
 
-        response = self._request("GET", path)
+        response = self._request("GET", "/company", params=params)
 
         if not response or "data" not in response:
             raise ValueError("Invalid response from get company endpoint")
