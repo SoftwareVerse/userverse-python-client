@@ -1,4 +1,5 @@
 import requests
+from dataclasses import dataclass
 
 from userverse_python_client.error_model import ClientErrorModel
 from userverse_python_client.http_client_base import BaseClient
@@ -113,3 +114,55 @@ def test_set_access_token_sets_bearer_header():
     client = BaseClient("https://example.test")
     client.set_access_token("abc123")
     assert client.session.headers["Authorization"] == "bearer abc123"
+
+
+def test_build_path_with_query_handles_sequences_and_none():
+    path = BaseClient._build_path_with_query(
+        "/company", {"company_id": 1, "tags": ["a", "b"], "skip": None}
+    )
+    assert path == "/company?company_id=1&tags=a&tags=b"
+
+
+def test_build_path_with_query_without_params_returns_original():
+    assert BaseClient._build_path_with_query("/plain", None) == "/plain"
+
+
+@dataclass
+class _DataPayload:
+    name: str
+
+
+class _ModelPayload:
+    def model_dump(self, **kwargs):
+        assert kwargs == {"exclude_none": True}
+        return {"model": "dumped"}
+
+
+class _DictPayload:
+    def dict(self):
+        return {"dict": "payload"}
+
+
+def test_prepare_json_payload_serializes_various_inputs():
+    assert BaseClient._prepare_json_payload(None) is None
+    assert BaseClient._prepare_json_payload({"raw": True}) == {"raw": True}
+    assert BaseClient._prepare_json_payload(_DataPayload("Ada")) == {"name": "Ada"}
+    assert BaseClient._prepare_json_payload(_ModelPayload()) == {"model": "dumped"}
+    assert BaseClient._prepare_json_payload(_DictPayload()) == {"dict": "payload"}
+
+
+def test_request_serializes_json_payload_before_dispatch():
+    client = BaseClient("https://example.test")
+    sent = {}
+
+    class _Payload:
+        def model_dump(self, **_kwargs):
+            return {"key": "value"}
+
+    def fake_request(**kwargs):
+        sent.update(kwargs)
+        return FakeResponse(json_data={"ok": True})
+
+    client.session.request = fake_request
+    assert client._request("POST", "/with-json", json=_Payload()) == {"ok": True}
+    assert sent["json"] == {"key": "value"}
