@@ -6,4 +6,8 @@ from .clients.user import UverseUserClient
 from .clients.company import UverseCompanyClient
 from .clients.company_user_management import UverseCompanyUserManagementClient
 
-__all__ = ["UverseUserClient", "UverseCompanyClient", "UverseCompanyUserManagementClient"]
+__all__ = [
+    "UverseUserClient",
+    "UverseCompanyClient",
+    "UverseCompanyUserManagementClient",
+]

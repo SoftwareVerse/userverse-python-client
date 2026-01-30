@@ -8,7 +8,9 @@ from userverse_models.user.user import UserQueryParams
 
 
 def _client() -> UverseCompanyUserManagementClient:
-    return UverseCompanyUserManagementClient("https://example.test", access_token="token")
+    return UverseCompanyUserManagementClient(
+        "https://example.test", access_token="token"
+    )
 
 
 def test_add_user_to_company_posts_payload() -> None:

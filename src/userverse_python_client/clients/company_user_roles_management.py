@@ -43,7 +43,7 @@ class UverseCompanyUserRolesManagement(BaseClient):
         return GenericResponseModel[PaginatedResponse[RoleReadModel]].model_validate(
             response
         )
-        
+
     def create_company_role(
         self,
         company_id: int,
@@ -65,7 +65,7 @@ class UverseCompanyUserRolesManagement(BaseClient):
             raise ValueError(f"Expected role data to be a dict, got {type(data)}")
 
         return GenericResponseModel[RoleReadModel].model_validate(response)
-    
+
     def update_company_role(
         self,
         company_id: int,
@@ -88,7 +88,7 @@ class UverseCompanyUserRolesManagement(BaseClient):
             raise ValueError(f"Expected role data to be a dict, got {type(data)}")
 
         return GenericResponseModel[RoleReadModel].model_validate(response)
-    
+
     def delete_company_role(
         self,
         company_id: int,

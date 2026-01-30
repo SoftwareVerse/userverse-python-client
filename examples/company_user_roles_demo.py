@@ -241,7 +241,13 @@ def main() -> None:
         ("Create Role", args.create_role, create_role, get_role_client, True),
         ("Update Role", args.update_role, update_role, get_role_client, True),
         ("Delete Role", args.delete_role, delete_role, get_role_client, True),
-        ("Default Roles", args.default_roles, show_default_roles, get_role_client, False),
+        (
+            "Default Roles",
+            args.default_roles,
+            show_default_roles,
+            get_role_client,
+            False,
+        ),
     ]
 
     if not any(flag for _, flag, _, _, _ in actions):
