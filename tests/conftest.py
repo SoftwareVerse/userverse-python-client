@@ -70,8 +70,11 @@ class _TokenResponseModel:
 
 
 @dataclass
-class _UserQueryParams:
+class _UserQueryParams(_ModelDumpMixin):
     limit: int | None = None
+    page: int | None = None
+    role_name: str | None = None
+    email: str | None = None
 
 
 @dataclass
@@ -108,6 +111,20 @@ class _CompanyQueryParamsModel(_ModelDumpMixin):
     description: str | None = None
     industry: str | None = None
     email: str | None = None
+
+
+@dataclass
+class _CompanyUserAddModel(_ModelDumpMixin):
+    user_id: int | None = None
+    role_name: str | None = None
+
+
+@dataclass
+class _CompanyUserReadModel:
+    id: int | None = None
+    user_id: int | None = None
+    email: str | None = None
+    role_name: str | None = None
 
 
 def _ensure_module(name: str) -> ModuleType:
@@ -147,3 +164,7 @@ company_company_module.CompanyUpdateModel = _CompanyUpdateModel
 company_company_module.CompanyReadModel = _CompanyReadModel
 company_company_module.CompanyQueryParamsModel = _CompanyQueryParamsModel
 company_module.company = company_company_module
+company_user_module = _ensure_module("userverse_models.company.user")
+company_user_module.CompanyUserAddModel = _CompanyUserAddModel
+company_user_module.CompanyUserReadModel = _CompanyUserReadModel
+company_module.user = company_user_module
