@@ -145,9 +145,7 @@ def run_action(
 
 
 def parse_args() -> argparse.Namespace:
-    parser = argparse.ArgumentParser(
-        description="Company user management demo client"
-    )
+    parser = argparse.ArgumentParser(description="Company user management demo client")
     parser.add_argument("--login", action="store_true", help="Login user to get token")
     parser.add_argument(
         "--list-users",

@@ -1,4 +1,3 @@
-
 from sverse_generic_models.generic_response import GenericResponseModel
 from sverse_generic_models.generic_pagination import PaginatedResponse
 from userverse_models.user.user import UserQueryParams
