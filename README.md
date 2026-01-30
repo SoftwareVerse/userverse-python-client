@@ -17,6 +17,9 @@
 <!-- Optional: release date & total downloads badges -->
 
 [![Release Date](https://img.shields.io/github/release-date/SoftwareVerse/userverse-python-client)](https://github.com/SoftwareVerse/userverse-python-client/releases/latest)
+
+
+<!-- Optional: release date & total downloads badges -->
 [![Downloads](https://img.shields.io/github/downloads/SoftwareVerse/userverse-python-client/total)](https://github.com/SoftwareVerse/userverse-python-client/releases)
 
 <!-- You already have Codecov; keep it (replace token if needed) -->

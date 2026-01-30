@@ -11,7 +11,7 @@ dependencies = [
     "black>=25.9.0",
     "fastapi>=0.119.0",
     "requests>=2.32.5",
-    "shared-models",
+    "shared-models>= 0.1.8",
 ]
 
 [build-system]
