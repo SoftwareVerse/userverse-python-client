@@ -2,7 +2,7 @@ import requests
 from typing import Any, Dict, Optional
 
 from sverse_generic_models.app_error import AppErrorResponseModel, DetailModel
-from .client_error import AppClientError
+from .error_model import ClientErrorModel
 from .response_messages import Errors
 
 
@@ -96,7 +96,7 @@ class BaseClient:
                     )
                 )
 
-            raise AppClientError(status_code=status, payload=payload) from http_err
+            raise ClientErrorModel(status_code=status, payload=payload) from http_err
 
         except requests.exceptions.RequestException as req_err:
             # timeouts, DNS, connection errors, etc.
@@ -107,4 +107,4 @@ class BaseClient:
                     error=str(req_err),
                 )
             )
-            raise AppClientError(status_code=500, payload=payload) from req_err
+            raise ClientErrorModel(status_code=500, payload=payload) from req_err
