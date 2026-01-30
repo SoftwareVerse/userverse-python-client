@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 from dataclasses import dataclass
+from enum import Enum
 from types import ModuleType
 from typing import Any
 
@@ -127,6 +128,47 @@ class _CompanyUserReadModel:
     role_name: str | None = None
 
 
+@dataclass
+class _RoleCreateModel(_ModelDumpMixin):
+    name: str | None = None
+    description: str | None = None
+
+
+@dataclass
+class _RoleUpdateModel(_ModelDumpMixin):
+    name: str | None = None
+    description: str | None = None
+
+
+@dataclass
+class _RoleDeleteModel(_ModelDumpMixin):
+    replacement_role_name: str | None = None
+    role_name_to_delete: str | None = None
+
+
+@dataclass
+class _RoleReadModel:
+    name: str | None = None
+    description: str | None = None
+
+
+@dataclass
+class _RoleQueryParamsModel(_ModelDumpMixin):
+    limit: int | None = None
+    page: int | None = None
+    name: str | None = None
+    description: str | None = None
+
+
+class _CompanyDefaultRoles(str, Enum):
+    ADMINISTRATOR = "Administrator: Full access"
+    VIEWER = "Viewer: Read-only access"
+
+    @property
+    def name_value(self) -> str:
+        return self.value.split(":")[0].strip()
+
+
 def _ensure_module(name: str) -> ModuleType:
     module = sys.modules.get(name)
     if module is None:
@@ -168,3 +210,11 @@ company_user_module = _ensure_module("userverse_models.company.user")
 company_user_module.CompanyUserAddModel = _CompanyUserAddModel
 company_user_module.CompanyUserReadModel = _CompanyUserReadModel
 company_module.user = company_user_module
+company_roles_module = _ensure_module("userverse_models.company.roles")
+company_roles_module.CompanyDefaultRoles = _CompanyDefaultRoles
+company_roles_module.RoleCreateModel = _RoleCreateModel
+company_roles_module.RoleUpdateModel = _RoleUpdateModel
+company_roles_module.RoleDeleteModel = _RoleDeleteModel
+company_roles_module.RoleReadModel = _RoleReadModel
+company_roles_module.RoleQueryParamsModel = _RoleQueryParamsModel
+company_module.roles = company_roles_module
