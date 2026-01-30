@@ -247,23 +247,45 @@ def main() -> None:
 
     actions = [
         ("Login", args.login, login_user, lambda: user_client, False),
-        ("List Companies", args.list_companies, list_user_companies, get_company_client, True),
+        (
+            "List Companies",
+            args.list_companies,
+            list_user_companies,
+            get_company_client,
+            True,
+        ),
         (
             "Get Company (ID)",
             args.get_company_by_id is not None,
-            lambda client, value=args.get_company_by_id: get_company_by_id(client, value),
+            lambda client, value=args.get_company_by_id: get_company_by_id(
+                client, value
+            ),
             get_company_client,
             True,
         ),
         (
             "Get Company (Email)",
             args.get_company_by_email is not None,
-            lambda client, value=args.get_company_by_email: get_company_by_email(client, value),
+            lambda client, value=args.get_company_by_email: get_company_by_email(
+                client, value
+            ),
             get_company_client,
             True,
         ),
-        ("Create Company", args.create_company, create_company, get_company_client, True),
-        ("Update Company", args.update_company, update_company, get_company_client, True),
+        (
+            "Create Company",
+            args.create_company,
+            create_company,
+            get_company_client,
+            True,
+        ),
+        (
+            "Update Company",
+            args.update_company,
+            update_company,
+            get_company_client,
+            True,
+        ),
     ]
 
     if not any(flag for _, flag, _, _, _ in actions):

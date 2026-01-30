@@ -15,10 +15,10 @@ from ..http_client_base import BaseClient
 class UverseCompanyClient(BaseClient):
     # This must have client.set_access_token() called after user login
     # so access token is required on __init__
-    
-    def __init__(self, base_url, access_token, timeout = 30):
+
+    def __init__(self, base_url, access_token, timeout=30):
         super().__init__(base_url, access_token, timeout)
-    
+
     def get_user_companies(
         self,
         query_params: CompanyQueryParamsModel = CompanyQueryParamsModel(),
@@ -33,10 +33,14 @@ class UverseCompanyClient(BaseClient):
 
         data = response.get("data", {})
         if not isinstance(data, dict):
-            raise ValueError(f"Expected company pagination data to be a dict, got {type(data)}")
+            raise ValueError(
+                f"Expected company pagination data to be a dict, got {type(data)}"
+            )
 
-        return GenericResponseModel[PaginatedResponse[CompanyReadModel]].model_validate(response)
-    
+        return GenericResponseModel[PaginatedResponse[CompanyReadModel]].model_validate(
+            response
+        )
+
     def get_company_by_id_or_email(
         self,
         company_id: Optional[int] = None,
@@ -60,14 +64,18 @@ class UverseCompanyClient(BaseClient):
             raise ValueError(f"Expected company data to be a dict, got {type(data)}")
 
         return GenericResponseModel[CompanyReadModel].model_validate(response)
-    
+
     def update_company(
         self,
         company_id: int,
         company_update: CompanyUpdateModel,
     ) -> GenericResponseModel[CompanyReadModel]:
         """Updates an existing company with the provided data, returns the updated company model."""
-        response = self._request("PATCH", f"/company/{company_id}", json=company_update.model_dump(exclude_none=True))
+        response = self._request(
+            "PATCH",
+            f"/company/{company_id}",
+            json=company_update.model_dump(exclude_none=True),
+        )
 
         if not response or "data" not in response:
             raise ValueError("Invalid response from update company endpoint")
@@ -77,13 +85,15 @@ class UverseCompanyClient(BaseClient):
             raise ValueError(f"Expected company data to be a dict, got {type(data)}")
 
         return GenericResponseModel[CompanyReadModel].model_validate(response)
-    
+
     def create_company(
         self,
         company_data: CompanyCreateModel,
     ) -> GenericResponseModel[CompanyReadModel]:
         """Creates a new company with the provided data, returns the company model."""
-        response = self._request("POST", "/company", json=company_data.model_dump(exclude_none=True))
+        response = self._request(
+            "POST", "/company", json=company_data.model_dump(exclude_none=True)
+        )
 
         if not response or "data" not in response:
             raise ValueError("Invalid response from create company endpoint")
