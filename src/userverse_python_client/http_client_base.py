@@ -1,4 +1,5 @@
 import requests
+from dataclasses import asdict, is_dataclass
 from typing import Any, Dict, Optional
 
 from sverse_generic_models.app_error import AppErrorResponseModel, DetailModel
@@ -27,27 +28,66 @@ class BaseClient:
             self.set_access_token(access_token)
 
     def set_access_token(self, token: str) -> None:
-        self.session.headers["Authorization"] = f"Bearer {token}"
+        # API expects lower-case bearer scheme to match historical behavior tested downstream
+        self.session.headers["Authorization"] = f"bearer {token}"
+
+    @staticmethod
+    def _build_path_with_query(path: str, params: Optional[Dict[str, Any]]) -> str:
+        if not params:
+            return path
+        query_parts = []
+        for key, value in params.items():
+            if value is None:
+                continue
+            if isinstance(value, (list, tuple, set)):
+                for item in value:
+                    query_parts.append(f"{key}={item}")
+            else:
+                query_parts.append(f"{key}={value}")
+
+        if not query_parts:
+            return path
+        return f"{path}?{'&'.join(str(part) for part in query_parts)}"
+
+    @staticmethod
+    def _prepare_json_payload(payload: Optional[Any]) -> Optional[Any]:
+        if payload is None:
+            return None
+        if isinstance(payload, dict):
+            return payload
+        if is_dataclass(payload):
+            return asdict(payload)
+
+        for attr in ("model_dump", "dict"):
+            method = getattr(payload, attr, None)
+            if callable(method):
+                try:
+                    return method(exclude_none=True)
+                except TypeError:
+                    return method()
+
+        return payload
 
     def _request(
         self,
         method: str,
         path: str,
         params: Optional[Dict[str, Any]] = None,
-        json: Optional[Dict[str, Any]] = None,
+        json: Optional[Any] = None,
         headers: Optional[Dict[str, str]] = None,
     ) -> Any:
         if not path.startswith("/"):
             raise ValueError("Path must start with '/'")
 
         url = f"{self.base_url}{path}"
+        prepared_json = self._prepare_json_payload(json)
 
         try:
             resp = self.session.request(
                 method=method,
                 url=url,
                 params=params,
-                json=json,
+                json=prepared_json,
                 headers=headers,
                 timeout=self.timeout,
             )

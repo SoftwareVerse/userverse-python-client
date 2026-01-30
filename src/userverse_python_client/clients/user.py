@@ -47,12 +47,7 @@ class UverseUserClient(BaseClient):
         )
         headers = {"Authorization": basic_auth}
 
-        response = self._request(
-            "POST",
-            "/user",
-            json=user_data.model_dump(exclude_none=True),
-            headers=headers,
-        )
+        response = self._request("POST", "/user", json=user_data, headers=headers)
 
         if not response or "data" not in response:
             raise ValueError("Invalid response from create user endpoint")
@@ -76,9 +71,7 @@ class UverseUserClient(BaseClient):
         self, user_update: UserUpdateModel
     ) -> GenericResponseModel[UserReadModel]:
         """Updates the current user's details. JWT token must be set in the client."""
-        response = self._request(
-            "PATCH", "/user/update", json=user_update.model_dump(exclude_none=True)
-        )
+        response = self._request("PATCH", "/user/update", json=user_update)
         if not response:
             raise ValueError("No user data found in response")
         if not isinstance(response, dict):
@@ -99,7 +92,8 @@ class UverseUserClient(BaseClient):
 
     def verify_user(self, token: str) -> GenericResponseModel[None]:
         """Verifies the current user's email. Token sent via email."""
-        response = self._request("GET", "/user/verify", params={"token": token})
+        path = self._build_path_with_query("/user/verify", {"token": token})
+        response = self._request("GET", path)
         if not response:
             raise ValueError("No data found in response")
         if not isinstance(response, dict):
@@ -111,9 +105,8 @@ class UverseUserClient(BaseClient):
     # Password reset methods
     def request_password_reset(self, email: EmailStr) -> GenericResponseModel[None]:
         """Requests a password reset email to be sent to the user."""
-        response = self._request(
-            "PATCH", "/password-reset/request", params={"email": email}
-        )
+        path = self._build_path_with_query("/password-reset/request", {"email": email})
+        response = self._request("PATCH", path)
         if not response:
             raise ValueError("No data found in response")
         if not isinstance(response, dict):
