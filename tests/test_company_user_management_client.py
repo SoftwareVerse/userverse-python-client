@@ -1,14 +1,14 @@
 import pytest
 
 from userverse_python_client.clients.company_user_management import (
-    CompanyUserManagementClient,
+    UverseCompanyUserManagementClient,
 )
 from userverse_models.company.user import CompanyUserAddModel
 from userverse_models.user.user import UserQueryParams
 
 
-def _client() -> CompanyUserManagementClient:
-    return CompanyUserManagementClient("https://example.test", access_token="token")
+def _client() -> UverseCompanyUserManagementClient:
+    return UverseCompanyUserManagementClient("https://example.test", access_token="token")
 
 
 def test_add_user_to_company_posts_payload() -> None:

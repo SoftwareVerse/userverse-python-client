@@ -1,7 +1,7 @@
 Company user management demo
 
 `examples/company_user_management_demo.py` demonstrates how to work with the
-company user endpoints exposed by `CompanyUserManagementClient`. The script
+company user endpoints exposed by `UverseCompanyUserManagementClient`. The script
 authenticates a user first (via `UverseUserClient`) and then uses the returned
 token for every company user request.
 
@@ -85,7 +85,7 @@ Notes
 
 - All company user actions require a logged-in user. Pass `--login` (or `--all`)
   and ensure the login env vars are set.
-- The script builds the `CompanyUserManagementClient` only after login
+- The script builds the `UverseCompanyUserManagementClient` only after login
   succeeds so the Authorization header always uses the latest access token.
 - Company user endpoints expect real domains/emails; avoid `.test`, `.example`,
   `.invalid`, or `.localhost` to prevent validation failures.

@@ -9,7 +9,7 @@ from userverse_models.company.user import (
 from ..http_client_base import BaseClient
 
 
-class CompanyUserManagementClient(BaseClient):
+class UverseCompanyUserManagementClient(BaseClient):
     def __init__(self, base_url, access_token, timeout=30):
         super().__init__(base_url, access_token, timeout)
 

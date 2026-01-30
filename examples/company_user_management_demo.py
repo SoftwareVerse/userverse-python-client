@@ -14,7 +14,7 @@ from userverse_models.user.user import UserLoginModel, UserQueryParams  # noqa: 
 from userverse_models.company.user import CompanyUserAddModel  # noqa: E402
 from userverse_python_client import UverseUserClient  # noqa: E402
 from userverse_python_client.clients.company_user_management import (  # noqa: E402
-    CompanyUserManagementClient,
+    UverseCompanyUserManagementClient,
 )
 from userverse_python_client.error_model import ClientErrorModel  # noqa: E402
 
@@ -54,8 +54,8 @@ def build_user_client() -> UverseUserClient:
     return UverseUserClient(base_url=BASE_URL)
 
 
-def build_company_user_client(token: str) -> CompanyUserManagementClient:
-    return CompanyUserManagementClient(base_url=BASE_URL, access_token=token)
+def build_company_user_client(token: str) -> UverseCompanyUserManagementClient:
+    return UverseCompanyUserManagementClient(base_url=BASE_URL, access_token=token)
 
 
 def log_response(label: str, response: Any) -> None:
@@ -103,14 +103,14 @@ def require_company_id() -> int:
     return require_int_env("COMPANY_USER_COMPANY_ID")
 
 
-def list_company_users(client: CompanyUserManagementClient) -> None:
+def list_company_users(client: UverseCompanyUserManagementClient) -> None:
     company_id = require_company_id()
     params = build_user_query_params()
     response = client.list_company_users(company_id=company_id, query_params=params)
     log_response("List Company Users", response)
 
 
-def add_company_user(client: CompanyUserManagementClient) -> None:
+def add_company_user(client: UverseCompanyUserManagementClient) -> None:
     company_id = require_company_id()
     user_id = require_int_env("COMPANY_USER_ADD_USER_ID")
     role_name = os.getenv("COMPANY_USER_ADD_ROLE_NAME")
@@ -119,7 +119,7 @@ def add_company_user(client: CompanyUserManagementClient) -> None:
     log_response("Add Company User", response)
 
 
-def delete_company_user(client: CompanyUserManagementClient) -> None:
+def delete_company_user(client: UverseCompanyUserManagementClient) -> None:
     company_id = require_company_id()
     user_id = require_int_env("COMPANY_USER_DELETE_USER_ID")
     response = client.delete_user_from_company(company_id=company_id, user_id=user_id)
@@ -179,10 +179,10 @@ def main() -> None:
         args.list_users = True
 
     access_token: Optional[str] = None
-    company_user_client: Optional[CompanyUserManagementClient] = None
+    company_user_client: Optional[UverseCompanyUserManagementClient] = None
     logged_in = False
 
-    def get_company_user_client() -> CompanyUserManagementClient:
+    def get_company_user_client() -> UverseCompanyUserManagementClient:
         nonlocal company_user_client, access_token, logged_in
         if not logged_in or not access_token:
             raise ValueError("Login is required before making company user calls.")
