@@ -55,7 +55,8 @@ class UverseCompanyClient(BaseClient):
         else:
             raise ValueError("Either company_id or email must be provided")
 
-        response = self._request("GET", "/company", params=params)
+        path = self._build_path_with_query("/company", params)
+        response = self._request("GET", path)
 
         if not response or "data" not in response:
             raise ValueError("Invalid response from get company endpoint")
