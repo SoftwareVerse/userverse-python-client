@@ -453,7 +453,7 @@ wheels = [
 
 [[package]]
 name = "userverse-python-client"
-version = "0.1.8"
+version = "0.1.9"
 source = { editable = "." }
 dependencies = [
     { name = "black" },
