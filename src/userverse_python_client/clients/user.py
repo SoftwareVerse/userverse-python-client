@@ -10,7 +10,7 @@ from userverse_models.user.user import (
     TokenResponseModel,
     UserQueryParams,
 )
-from .http_client_base import BaseClient
+from ..http_client_base import BaseClient
 
 
 class UverseUserClient(BaseClient):

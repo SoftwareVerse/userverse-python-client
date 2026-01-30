@@ -1,6 +1,6 @@
 import base64
 
-from userverse_python_client.user import UverseUserClient
+from userverse_python_client import UverseUserClient
 from userverse_models.user.user import UserCreateModel, UserLoginModel, UserUpdateModel
 
 

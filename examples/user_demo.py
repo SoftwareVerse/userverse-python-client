@@ -12,8 +12,8 @@ from userverse_models.user.user import (  # noqa: E402
     UserUpdateModel,
     UserCreateModel,
 )
-from userverse_python_client.user import UverseUserClient  # noqa: E402
-from userverse_python_client.client_error import AppClientError  # noqa: E402
+from userverse_python_client import UverseUserClient  # noqa: E402
+from userverse_python_client.error_model import ClientErrorModel  # noqa: E402
 
 BASE_URL = "https://apps.oxillium-api.co.za/userverse"
 
@@ -101,7 +101,7 @@ def run_action(action_name: str, fn, client: UverseUserClient) -> bool:
     try:
         fn(client)
         return True
-    except AppClientError as exc:
+    except ClientErrorModel as exc:
         detail = exc.payload.detail
         print(f"{action_name} failed ({exc.status_code}): {detail.message}")
         print(f"Error details: {detail.error}")

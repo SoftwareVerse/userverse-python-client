@@ -1,7 +1,7 @@
 from sverse_generic_models.app_error import AppErrorResponseModel
 
 
-class AppClientError(Exception):
+class ClientErrorModel(Exception):
     def __init__(self, status_code: int, payload: AppErrorResponseModel):
         self.status_code = status_code
         self.payload = payload

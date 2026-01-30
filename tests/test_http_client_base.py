@@ -1,6 +1,6 @@
 import requests
 
-from userverse_python_client.client_error import AppClientError
+from userverse_python_client.error_model import ClientErrorModel
 from userverse_python_client.http_client_base import BaseClient
 
 
@@ -64,12 +64,12 @@ def test_request_wraps_http_error_with_detail_payload():
     client.session.request = fake_request
     try:
         client._request("GET", "/broken")
-    except AppClientError as exc:
+    except ClientErrorModel as exc:
         assert exc.status_code == 400
         assert "Nope" in str(exc)
         assert "bad" in str(exc)
     else:
-        raise AssertionError("Expected AppClientError")
+        raise AssertionError("Expected ClientErrorModel")
 
 
 def test_request_wraps_http_error_without_detail_payload():
@@ -86,11 +86,11 @@ def test_request_wraps_http_error_without_detail_payload():
     client.session.request = fake_request
     try:
         client._request("GET", "/broken")
-    except AppClientError as exc:
+    except ClientErrorModel as exc:
         assert exc.status_code == 500
         assert "invalid" in str(exc).lower()
     else:
-        raise AssertionError("Expected AppClientError")
+        raise AssertionError("Expected ClientErrorModel")
 
 
 def test_request_wraps_request_exception():
@@ -102,11 +102,11 @@ def test_request_wraps_request_exception():
     client.session.request = fake_request
     try:
         client._request("GET", "/broken")
-    except AppClientError as exc:
+    except ClientErrorModel as exc:
         assert exc.status_code == 500
         assert "boom" in str(exc)
     else:
-        raise AssertionError("Expected AppClientError")
+        raise AssertionError("Expected ClientErrorModel")
 
 
 def test_set_access_token_sets_bearer_header():
