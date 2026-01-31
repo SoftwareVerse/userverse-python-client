@@ -418,8 +418,8 @@ wheels = [
 
 [[package]]
 name = "shared-models"
-version = "0.1.8"
-source = { git = "https://github.com/SoftwareVerse/softwareVerse-shared-python-utils.git?rev=v0.1.8#2c494009bf020a1ef1ddf787aac6b204922149d2" }
+version = "0.1.10"
+source = { git = "https://github.com/SoftwareVerse/softwareVerse-shared-python-utils.git?rev=v0.1.10#9db9ec359a45dae266df6e43b34c60253f6d671f" }
 dependencies = [
     { name = "black" },
     { name = "email-validator" },
@@ -473,7 +473,7 @@ wheels = [
 
 [[package]]
 name = "userverse-python-client"
-version = "0.1.10"
+version = "0.1.11"
 source = { editable = "." }
 dependencies = [
     { name = "black" },
@@ -487,5 +487,5 @@ requires-dist = [
     { name = "black", specifier = ">=25.9.0" },
     { name = "fastapi", specifier = ">=0.119.0" },
     { name = "requests", specifier = ">=2.32.5" },
-    { name = "shared-models", git = "https://github.com/SoftwareVerse/softwareVerse-shared-python-utils.git?rev=v0.1.8" },
+    { name = "shared-models", git = "https://github.com/SoftwareVerse/softwareVerse-shared-python-utils.git?rev=v0.1.10" },
 ]
