@@ -1,11 +1,3 @@
-
-
-
-
-<!-- CI status for your release workflow -->
-
-[![CI - Release Tag](https://github.com/SoftwareVerse/userverse-python-client/actions/workflows/release.yml/badge.svg)](https://github.com/SoftwareVerse/userverse-python-client/actions/workflows/release.yml)
-
 <!-- Latest release (SemVer-aware) badge → opens the latest release page -->
 
 [![Latest Release](https://img.shields.io/github/v/release/SoftwareVerse/userverse-python-client?display_name=tag&sort=semver)](https://github.com/SoftwareVerse/userverse-python-client/releases/latest)
