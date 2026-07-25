@@ -51,7 +51,9 @@ class UverseUserClient(BaseClient):
         )
         headers = {"Authorization": basic_auth}
 
-        response = self._request("POST", "/user/create", json=user_data, headers=headers)
+        response = self._request(
+            "POST", "/user/create", json=user_data, headers=headers
+        )
 
         if not response or "data" not in response:
             raise ValueError("Invalid response from create user endpoint")

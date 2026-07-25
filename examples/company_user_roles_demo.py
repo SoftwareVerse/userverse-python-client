@@ -68,7 +68,10 @@ def require_company_id() -> str:
 
 def build_role_query_params() -> RoleQueryParamsModel:
     params: dict[str, object] = {}
-    for int_field, env_name in [("limit", "COMPANY_ROLE_QUERY_LIMIT"), ("page", "COMPANY_ROLE_QUERY_PAGE")]:
+    for int_field, env_name in [
+        ("limit", "COMPANY_ROLE_QUERY_LIMIT"),
+        ("page", "COMPANY_ROLE_QUERY_PAGE"),
+    ]:
         value = os.getenv(env_name)
         if value:
             params[int_field] = int(value)
@@ -128,10 +131,15 @@ def delete_role(client: UverseCompanyUserRolesManagement) -> None:
 
 
 def show_default_roles(_: UverseCompanyUserRolesManagement) -> None:
-    print("Default Roles:", ", ".join(UverseCompanyUserRolesManagement.list_default_roles()))
+    print(
+        "Default Roles:",
+        ", ".join(UverseCompanyUserRolesManagement.list_default_roles()),
+    )
 
 
-def run_action(action_name: str, fn: ActionFunction, client_provider: ClientProvider) -> Tuple[bool, Any]:
+def run_action(
+    action_name: str, fn: ActionFunction, client_provider: ClientProvider
+) -> Tuple[bool, Any]:
     try:
         client = client_provider()
         result = fn(client)
@@ -183,7 +191,13 @@ def main() -> None:
         ("Create Role", args.create_role, create_role, get_role_client, True),
         ("Update Role", args.update_role, update_role, get_role_client, True),
         ("Delete Role", args.delete_role, delete_role, get_role_client, True),
-        ("Default Roles", args.default_roles, show_default_roles, get_role_client, False),
+        (
+            "Default Roles",
+            args.default_roles,
+            show_default_roles,
+            get_role_client,
+            False,
+        ),
     ]
 
     if not any(flag for _, flag, _, _, _ in actions):

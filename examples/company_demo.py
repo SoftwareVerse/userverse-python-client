@@ -62,7 +62,10 @@ def login_user(client: UverseUserClient) -> str:
 
 def build_query_params() -> CompanyQueryParamsModel:
     params: dict[str, object] = {}
-    for int_field, env_name in [("limit", "COMPANY_QUERY_LIMIT"), ("page", "COMPANY_QUERY_PAGE")]:
+    for int_field, env_name in [
+        ("limit", "COMPANY_QUERY_LIMIT"),
+        ("page", "COMPANY_QUERY_PAGE"),
+    ]:
         value = os.getenv(env_name)
         if value:
             params[int_field] = int(value)
@@ -99,14 +102,30 @@ def list_user_companies(client: UverseCompanyClient) -> None:
     log_response("List Companies", client.get_user_companies(build_query_params()))
 
 
-def get_company_by_id(client: UverseCompanyClient, company_id_value: object = USE_ENV_VALUE) -> None:
-    company_id = require_env("COMPANY_LOOKUP_ID") if company_id_value is USE_ENV_VALUE else str(company_id_value)
-    log_response("Company Lookup (ID)", client.get_company_by_id_or_email(company_id=company_id))
+def get_company_by_id(
+    client: UverseCompanyClient, company_id_value: object = USE_ENV_VALUE
+) -> None:
+    company_id = (
+        require_env("COMPANY_LOOKUP_ID")
+        if company_id_value is USE_ENV_VALUE
+        else str(company_id_value)
+    )
+    log_response(
+        "Company Lookup (ID)", client.get_company_by_id_or_email(company_id=company_id)
+    )
 
 
-def get_company_by_email(client: UverseCompanyClient, email_value: object = USE_ENV_VALUE) -> None:
-    email = require_env("COMPANY_LOOKUP_EMAIL") if email_value is USE_ENV_VALUE else str(email_value)
-    log_response("Company Lookup (Email)", client.get_company_by_id_or_email(email=email))
+def get_company_by_email(
+    client: UverseCompanyClient, email_value: object = USE_ENV_VALUE
+) -> None:
+    email = (
+        require_env("COMPANY_LOOKUP_EMAIL")
+        if email_value is USE_ENV_VALUE
+        else str(email_value)
+    )
+    log_response(
+        "Company Lookup (Email)", client.get_company_by_id_or_email(email=email)
+    )
 
 
 def create_company(client: UverseCompanyClient) -> None:
@@ -135,7 +154,9 @@ def update_company(client: UverseCompanyClient) -> None:
     log_response("Update Company", client.update_company(company_id, payload))
 
 
-def run_action(action_name: str, fn: ActionFunction, client_provider: ClientProvider) -> Tuple[bool, Any]:
+def run_action(
+    action_name: str, fn: ActionFunction, client_provider: ClientProvider
+) -> Tuple[bool, Any]:
     try:
         client = client_provider()
         result = fn(client)
@@ -153,8 +174,15 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Userverse company demo")
     parser.add_argument("--login", action="store_true")
     parser.add_argument("--list-companies", action="store_true")
-    parser.add_argument("--get-company-by-id", metavar="COMPANY_ID", nargs="?", const=USE_ENV_VALUE)
-    parser.add_argument("--get-company-by-email", metavar="COMPANY_EMAIL", nargs="?", const=USE_ENV_VALUE)
+    parser.add_argument(
+        "--get-company-by-id", metavar="COMPANY_ID", nargs="?", const=USE_ENV_VALUE
+    )
+    parser.add_argument(
+        "--get-company-by-email",
+        metavar="COMPANY_EMAIL",
+        nargs="?",
+        const=USE_ENV_VALUE,
+    )
     parser.add_argument("--create-company", action="store_true")
     parser.add_argument("--update-company", action="store_true")
     parser.add_argument("--all", action="store_true", help="Run login + list companies")
@@ -183,23 +211,45 @@ def main() -> None:
 
     actions = [
         ("Login", args.login, login_user, lambda: user_client, False),
-        ("List Companies", args.list_companies, list_user_companies, get_company_client, True),
+        (
+            "List Companies",
+            args.list_companies,
+            list_user_companies,
+            get_company_client,
+            True,
+        ),
         (
             "Get Company (ID)",
             args.get_company_by_id is not None,
-            lambda client, value=args.get_company_by_id: get_company_by_id(client, value),
+            lambda client, value=args.get_company_by_id: get_company_by_id(
+                client, value
+            ),
             get_company_client,
             True,
         ),
         (
             "Get Company (Email)",
             args.get_company_by_email is not None,
-            lambda client, value=args.get_company_by_email: get_company_by_email(client, value),
+            lambda client, value=args.get_company_by_email: get_company_by_email(
+                client, value
+            ),
             get_company_client,
             True,
         ),
-        ("Create Company", args.create_company, create_company, get_company_client, True),
-        ("Update Company", args.update_company, update_company, get_company_client, True),
+        (
+            "Create Company",
+            args.create_company,
+            create_company,
+            get_company_client,
+            True,
+        ),
+        (
+            "Update Company",
+            args.update_company,
+            update_company,
+            get_company_client,
+            True,
+        ),
     ]
 
     if not any(flag for _, flag, _, _, _ in actions):

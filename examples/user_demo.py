@@ -185,11 +185,26 @@ def main() -> None:
         ("Revoke Token", args.revoke_token, revoke_token, False),
         ("Get User", args.get_user, get_user, True),
         ("Update User", args.update_user, update_user, True),
-        ("Resend Verification", args.resend_verification, resend_verification_email, False),
+        (
+            "Resend Verification",
+            args.resend_verification,
+            resend_verification_email,
+            False,
+        ),
         ("Verify User", args.verify_user, verify_user, False),
-        ("Request Password Reset", args.request_password_reset, request_password_reset, False),
+        (
+            "Request Password Reset",
+            args.request_password_reset,
+            request_password_reset,
+            False,
+        ),
         ("Reset Password OTP", args.reset_password_otp, reset_password_with_otp, False),
-        ("Reset Password Token", args.reset_password_token, reset_password_with_token, False),
+        (
+            "Reset Password Token",
+            args.reset_password_token,
+            reset_password_with_token,
+            False,
+        ),
         ("Delete User", args.delete_user, delete_user, True),
     ]
 

@@ -62,7 +62,10 @@ def login_user(client: UverseUserClient) -> str:
 
 def build_user_query_params() -> UserQueryParams:
     params: dict[str, object] = {}
-    for int_field, env_name in [("limit", "COMPANY_USER_QUERY_LIMIT"), ("page", "COMPANY_USER_QUERY_PAGE")]:
+    for int_field, env_name in [
+        ("limit", "COMPANY_USER_QUERY_LIMIT"),
+        ("page", "COMPANY_USER_QUERY_PAGE"),
+    ]:
         value = os.getenv(env_name)
         if value:
             params[int_field] = int(value)
@@ -121,7 +124,9 @@ def delete_company_user(client: UverseCompanyUserManagementClient) -> None:
     log_response("Delete Company User", response)
 
 
-def run_action(action_name: str, fn: ActionFunction, client_provider: ClientProvider) -> Tuple[bool, Any]:
+def run_action(
+    action_name: str, fn: ActionFunction, client_provider: ClientProvider
+) -> Tuple[bool, Any]:
     try:
         client = client_provider()
         result = fn(client)
@@ -168,8 +173,20 @@ def main() -> None:
 
     actions = [
         ("Login", args.login, login_user, lambda: user_client, False),
-        ("List Company Users", args.list_users, list_company_users, get_company_user_client, True),
-        ("Add Company User", args.add_user, add_company_user, get_company_user_client, True),
+        (
+            "List Company Users",
+            args.list_users,
+            list_company_users,
+            get_company_user_client,
+            True,
+        ),
+        (
+            "Add Company User",
+            args.add_user,
+            add_company_user,
+            get_company_user_client,
+            True,
+        ),
         (
             "Update Company User Role",
             args.update_user_role,
@@ -177,7 +194,13 @@ def main() -> None:
             get_company_user_client,
             True,
         ),
-        ("Delete Company User", args.delete_user, delete_company_user, get_company_user_client, True),
+        (
+            "Delete Company User",
+            args.delete_user,
+            delete_company_user,
+            get_company_user_client,
+            True,
+        ),
     ]
 
     if not any(flag for _, flag, _, _, _ in actions):

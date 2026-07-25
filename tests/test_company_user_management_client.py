@@ -23,7 +23,13 @@ def test_add_user_to_company_posts_payload() -> None:
 
     def fake_request(method, path, json=None, **_kwargs):
         called.update(method=method, path=path, json=json)
-        return {"data": {"id": "1", "email": "user@example.com", "role_name": "Administrator"}}
+        return {
+            "data": {
+                "id": "1",
+                "email": "user@example.com",
+                "role_name": "Administrator",
+            }
+        }
 
     client._request = fake_request  # type: ignore[method-assign]
     response = client.add_user_to_company(
