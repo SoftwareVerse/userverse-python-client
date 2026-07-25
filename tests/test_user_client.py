@@ -69,6 +69,19 @@ def test_refresh_user_token_posts_payload():
     assert client.refresh_user_token(payload) == {"data": {"token": "abc"}}
 
 
+def test_refresh_user_token_requires_data_key():
+    client = UverseUserClient("https://example.test")
+    payload = RefreshTokenRequestModel(refresh_token="refresh")
+    client._request = lambda *_args, **_kwargs: {}
+
+    try:
+        client.refresh_user_token(payload)
+    except ValueError as exc:
+        assert "Invalid response" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError")
+
+
 def test_revoke_refresh_token_posts_payload():
     client = UverseUserClient("https://example.test")
     payload = RefreshTokenRequestModel(refresh_token="refresh")
@@ -81,6 +94,19 @@ def test_revoke_refresh_token_posts_payload():
 
     client._request = fake_request
     assert client.revoke_refresh_token(payload) == {"data": {"revoked": True}}
+
+
+def test_revoke_refresh_token_requires_data_key():
+    client = UverseUserClient("https://example.test")
+    payload = RefreshTokenRequestModel(refresh_token="refresh")
+    client._request = lambda *_args, **_kwargs: {}
+
+    try:
+        client.revoke_refresh_token(payload)
+    except ValueError as exc:
+        assert "Invalid response" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError")
 
 
 def test_get_user_fetches_current_user():
@@ -123,6 +149,19 @@ def test_resend_verification_email_posts_payload():
     assert client.resend_verification_email(payload) == {"data": None}
 
 
+def test_resend_verification_email_requires_dict_response():
+    client = UverseUserClient("https://example.test")
+    payload = PasswordResetRequest(email="a@example.com")
+    client._request = lambda *_args, **_kwargs: "oops"
+
+    try:
+        client.resend_verification_email(payload)
+    except ValueError as exc:
+        assert "Expected response data to be a dict" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError")
+
+
 def test_verify_user_uses_token_query():
     client = UverseUserClient("https://example.test")
 
@@ -133,6 +172,18 @@ def test_verify_user_uses_token_query():
 
     client._request = fake_request
     assert client.verify_user("abc") == {"data": None}
+
+
+def test_verify_user_requires_dict_response():
+    client = UverseUserClient("https://example.test")
+    client._request = lambda *_args, **_kwargs: "oops"
+
+    try:
+        client.verify_user("abc")
+    except ValueError as exc:
+        assert "Expected response data to be a dict" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError")
 
 
 def test_request_password_reset_posts_payload():
@@ -147,6 +198,19 @@ def test_request_password_reset_posts_payload():
 
     client._request = fake_request
     assert client.request_password_reset(payload) == {"data": None}
+
+
+def test_request_password_reset_requires_dict_response():
+    client = UverseUserClient("https://example.test")
+    payload = PasswordResetRequest(email="a@example.com", method="magic_link")
+    client._request = lambda *_args, **_kwargs: "oops"
+
+    try:
+        client.request_password_reset(payload)
+    except ValueError as exc:
+        assert "Expected response data to be a dict" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError")
 
 
 def test_reset_password_with_token_posts_payload():
@@ -165,6 +229,21 @@ def test_reset_password_with_token_posts_payload():
     assert client.reset_password_with_token(payload) == {"data": None}
 
 
+def test_reset_password_with_token_requires_dict_response():
+    client = UverseUserClient("https://example.test")
+    payload = MagicLinkPasswordResetConfirmRequest(
+        token="token-123", new_password="new-secret"
+    )
+    client._request = lambda *_args, **_kwargs: "oops"
+
+    try:
+        client.reset_password_with_token(payload)
+    except ValueError as exc:
+        assert "Expected response data to be a dict" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError")
+
+
 def test_reset_password_validate_otp_uses_basic_auth_and_query_param():
     client = UverseUserClient("https://example.test")
     login = UserLoginModel(email="a@example.com", password="pw")
@@ -179,6 +258,19 @@ def test_reset_password_validate_otp_uses_basic_auth_and_query_param():
     assert client.reset_password_validate_otp(login, "123") == {"data": None}
 
 
+def test_reset_password_validate_otp_requires_dict_response():
+    client = UverseUserClient("https://example.test")
+    login = UserLoginModel(email="a@example.com", password="pw")
+    client._request = lambda *_args, **_kwargs: "oops"
+
+    try:
+        client.reset_password_validate_otp(login, "123")
+    except ValueError as exc:
+        assert "Expected response data to be a dict" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError")
+
+
 def test_delete_user_calls_current_endpoint():
     client = UverseUserClient("https://example.test")
 
@@ -189,3 +281,15 @@ def test_delete_user_calls_current_endpoint():
 
     client._request = fake_request
     assert client.delete_user() == {"data": None}
+
+
+def test_delete_user_requires_dict_response():
+    client = UverseUserClient("https://example.test")
+    client._request = lambda *_args, **_kwargs: "oops"
+
+    try:
+        client.delete_user()
+    except ValueError as exc:
+        assert "Expected response data to be a dict" in str(exc)
+    else:
+        raise AssertionError("Expected ValueError")

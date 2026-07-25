@@ -72,6 +72,17 @@ def test_delete_user_from_company_calls_current_endpoint() -> None:
     assert response["data"]["role_name"] == "Viewer"
 
 
+def test_delete_user_from_company_requires_dict_payload() -> None:
+    client = _client()
+
+    def fake_request(*_args, **_kwargs):
+        return {"data": []}
+
+    client._request = fake_request  # type: ignore[method-assign]
+    with pytest.raises(ValueError, match="Expected company user data"):
+        client.delete_user_from_company("1", "2")
+
+
 def test_update_user_role_calls_current_endpoint() -> None:
     client = _client()
     update_model = CompanyUserRoleUpdateModel(role="Owner")
@@ -90,6 +101,18 @@ def test_update_user_role_calls_current_endpoint() -> None:
         "json": update_model.model_dump(exclude_none=True),
     }
     assert response["data"]["role_name"] == "Owner"
+
+
+def test_update_user_role_requires_dict_payload() -> None:
+    client = _client()
+    update_model = CompanyUserRoleUpdateModel(role="Owner")
+
+    def fake_request(*_args, **_kwargs):
+        return {"data": []}
+
+    client._request = fake_request  # type: ignore[method-assign]
+    with pytest.raises(ValueError, match="Expected company user data"):
+        client.update_user_role("1", "2", update_model)
 
 
 def test_list_company_users_calls_endpoint() -> None:
