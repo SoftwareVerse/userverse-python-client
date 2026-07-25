@@ -49,14 +49,17 @@ class _UserLoginModel:
 
 @dataclass
 class _UserCreateModel:
-    email: str
-    password: str
-    name: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
+    phone_number: str | None = None
 
 
 @dataclass
 class _UserUpdateModel:
-    name: str | None = None
+    first_name: str | None = None
+    last_name: str | None = None
+    phone_number: str | None = None
+    password: str | None = None
 
 
 @dataclass
@@ -68,6 +71,28 @@ class _UserReadModel:
 @dataclass
 class _TokenResponseModel:
     token: str | None = None
+
+
+@dataclass
+class _RefreshTokenRequestModel(_ModelDumpMixin):
+    refresh_token: str
+
+
+@dataclass
+class _TokenRevocationResponseModel:
+    revoked: bool = True
+
+
+@dataclass
+class _PasswordResetRequest(_ModelDumpMixin):
+    email: str
+    method: str | None = None
+
+
+@dataclass
+class _MagicLinkPasswordResetConfirmRequest(_ModelDumpMixin):
+    token: str
+    new_password: str
 
 
 @dataclass
@@ -99,7 +124,7 @@ class _CompanyUpdateModel(_ModelDumpMixin):
 
 @dataclass
 class _CompanyReadModel:
-    id: int | None = None
+    id: str | None = None
     name: str | None = None
 
 
@@ -116,14 +141,18 @@ class _CompanyQueryParamsModel(_ModelDumpMixin):
 
 @dataclass
 class _CompanyUserAddModel(_ModelDumpMixin):
-    user_id: int | None = None
-    role_name: str | None = None
+    email: str | None = None
+    role: str | None = None
+
+
+@dataclass
+class _CompanyUserRoleUpdateModel(_ModelDumpMixin):
+    role: str | None = None
 
 
 @dataclass
 class _CompanyUserReadModel:
-    id: int | None = None
-    user_id: int | None = None
+    id: str | None = None
     email: str | None = None
     role_name: str | None = None
 
@@ -161,6 +190,7 @@ class _RoleQueryParamsModel(_ModelDumpMixin):
 
 
 class _CompanyDefaultRoles(str, Enum):
+    OWNER = "Owner: Full access"
     ADMINISTRATOR = "Administrator: Full access"
     VIEWER = "Viewer: Read-only access"
 
@@ -196,8 +226,19 @@ user_user_module.UserUpdateModel = _UserUpdateModel
 user_user_module.UserCreateModel = _UserCreateModel
 user_user_module.UserReadModel = _UserReadModel
 user_user_module.TokenResponseModel = _TokenResponseModel
+user_user_module.RefreshTokenRequestModel = _RefreshTokenRequestModel
+user_user_module.TokenRevocationResponseModel = _TokenRevocationResponseModel
 user_user_module.UserQueryParams = _UserQueryParams
 user_module.user = user_user_module
+user_password_module = _ensure_module("userverse_models.user.password")
+user_password_module.PasswordResetMethod = Enum(
+    "PasswordResetMethod", {"OTP": "otp", "MAGIC_LINK": "magic_link"}, type=str
+)
+user_password_module.PasswordResetRequest = _PasswordResetRequest
+user_password_module.MagicLinkPasswordResetConfirmRequest = (
+    _MagicLinkPasswordResetConfirmRequest
+)
+user_module.password = user_password_module
 
 company_module = _ensure_module("userverse_models.company")
 company_company_module = _ensure_module("userverse_models.company.company")
@@ -209,6 +250,7 @@ company_module.company = company_company_module
 company_user_module = _ensure_module("userverse_models.company.user")
 company_user_module.CompanyUserAddModel = _CompanyUserAddModel
 company_user_module.CompanyUserReadModel = _CompanyUserReadModel
+company_user_module.CompanyUserRoleUpdateModel = _CompanyUserRoleUpdateModel
 company_module.user = company_user_module
 company_roles_module = _ensure_module("userverse_models.company.roles")
 company_roles_module.CompanyDefaultRoles = _CompanyDefaultRoles

@@ -1,112 +1,131 @@
-Company demo
+## Company Demo
 
-`examples/company_demo.py` shows how to work with the company endpoints in
-`UverseCompanyClient`. The script handles user authentication first (via
-`UverseUserClient`) and then reuses that token for every company call.
+`examples/company_demo.py` demonstrates `UverseCompanyClient`.
 
-Running the demo
+It covers:
 
-Every action is toggled with a CLI flag and reads data from environment
-variables. Missing required env vars cause that action to be skipped with a
-message so you can run only the flow you need.
+- list authenticated user companies
+- get a company by UUID
+- get a company by email
+- create a company
+- update a company
+
+## Run It
 
 From the repo root:
 
-```
+```bash
 uv run -m examples.company_demo --help
 ```
 
-Common usage
+Use a local API service:
 
-Login and list user companies (most calls require a token):
-
+```bash
+USERVERSE_BASE_URL="http://localhost:8500/userverse" uv run -m examples.company_demo --help
 ```
+
+## Common Flows
+
+Login and list companies:
+
+```bash
+USERVERSE_BASE_URL="http://localhost:8500/userverse" \
 USER_EMAIL="you@example.com" USER_PASSWORD="secret" \
 uv run -m examples.company_demo --login --list-companies
 ```
 
-Lookup a company by id (pass inline or rely on env fallback):
+Lookup by company UUID:
 
-```
+```bash
+USERVERSE_BASE_URL="http://localhost:8500/userverse" \
 USER_EMAIL="you@example.com" USER_PASSWORD="secret" \
-uv run -m examples.company_demo --login --get-company-by-id 123
-```
-
-Lookup a company by email:
-
-```
-USER_EMAIL="you@example.com" USER_PASSWORD="secret" \
-uv run -m examples.company_demo --login --get-company-by-email info@acmecorp.com
+uv run -m examples.company_demo --login --get-company-by-id 550e8400-e29b-41d4-a716-446655440000
 ```
 
 Create a company:
 
-```
+```bash
+USERVERSE_BASE_URL="http://localhost:8500/userverse" \
 USER_EMAIL="you@example.com" USER_PASSWORD="secret" \
-COMPANY_CREATE_NAME="Acme Corp" COMPANY_CREATE_EMAIL="info@acmecorp.com" \
+COMPANY_CREATE_NAME="Acme Corp" COMPANY_CREATE_EMAIL="info@acme.co.za" \
+COMPANY_CREATE_ADDRESS_CITY="Cape Town" COMPANY_CREATE_ADDRESS_COUNTRY="South Africa" \
 uv run -m examples.company_demo --login --create-company
 ```
 
-Available flags
+Update a company:
 
-- --login
-- --list-companies
-- --get-company-by-id
-- --get-company-by-email
-- --create-company
-- --update-company
-- --all (runs `--login --list-companies`)
+```bash
+USERVERSE_BASE_URL="http://localhost:8500/userverse" \
+USER_EMAIL="you@example.com" USER_PASSWORD="secret" \
+COMPANY_UPDATE_ID="550e8400-e29b-41d4-a716-446655440000" \
+COMPANY_UPDATE_DESCRIPTION="Updated description" \
+uv run -m examples.company_demo --login --update-company
+```
 
-Client methods covered
+## Flags
 
-- user_login (fetches the JWT used by the company client)
-- get_user_companies
-- get_company_by_id_or_email (ID)
-- get_company_by_id_or_email (email)
-- create_company
-- update_company
+- `--login`
+- `--list-companies`
+- `--get-company-by-id`
+- `--get-company-by-email`
+- `--create-company`
+- `--update-company`
+- `--all`
 
-Environment variables
+## Environment Variables
 
-Login:
-- USER_EMAIL
-- USER_PASSWORD
+Shared:
 
-List companies (all optional filters):
-- COMPANY_QUERY_LIMIT
-- COMPANY_QUERY_PAGE
-- COMPANY_QUERY_ROLE_NAME
-- COMPANY_QUERY_NAME
-- COMPANY_QUERY_DESCRIPTION
-- COMPANY_QUERY_INDUSTRY
-- COMPANY_QUERY_EMAIL
+- `USERVERSE_BASE_URL` optional
+- `USER_EMAIL`
+- `USER_PASSWORD`
 
-Get company by id (env fallback when CLI value omitted):
-- COMPANY_LOOKUP_ID
+List filters:
 
-Get company by email (env fallback when CLI value omitted):
-- COMPANY_LOOKUP_EMAIL
+- `COMPANY_QUERY_LIMIT`
+- `COMPANY_QUERY_PAGE`
+- `COMPANY_QUERY_ROLE_NAME`
+- `COMPANY_QUERY_NAME`
+- `COMPANY_QUERY_DESCRIPTION`
+- `COMPANY_QUERY_INDUSTRY`
+- `COMPANY_QUERY_EMAIL`
 
-Create company:
-- COMPANY_CREATE_NAME
-- COMPANY_CREATE_EMAIL
-- COMPANY_CREATE_DESCRIPTION (optional)
-- COMPANY_CREATE_INDUSTRY (optional)
-- COMPANY_CREATE_PHONE_NUMBER (optional)
-- COMPANY_CREATE_ADDRESS (optional)
+Lookup:
 
-Update company:
-- COMPANY_UPDATE_ID
-- COMPANY_UPDATE_NAME (optional)
-- COMPANY_UPDATE_DESCRIPTION (optional)
-- COMPANY_UPDATE_INDUSTRY (optional)
-- COMPANY_UPDATE_PHONE_NUMBER (optional)
-- COMPANY_UPDATE_ADDRESS (optional)
+- `COMPANY_LOOKUP_ID`
+- `COMPANY_LOOKUP_EMAIL`
 
-Notes
+Create:
 
-- All company actions require a logged-in user. Pass `--login` (or `--all`) and
-  ensure `USER_EMAIL`/`USER_PASSWORD` are set.
-- The script builds the `UverseCompanyClient` only after login succeeds so the
-  Authorization header always carries the fresh token.
-- Company-related endpoints validate email domains and reject [RFC 2606](https://datatracker.ietf.org/doc/html/rfc2606) special-use TLDs such as `.test`, `.example`, `.invalid`, or `.localhost`. Use a realistic domain like `info@acmecorp.com` in the examples above (or your own email) to avoid validation failures.
+- `COMPANY_CREATE_NAME`
+- `COMPANY_CREATE_EMAIL`
+- `COMPANY_CREATE_DESCRIPTION` optional
+- `COMPANY_CREATE_INDUSTRY` optional
+- `COMPANY_CREATE_PHONE_NUMBER` optional
+- `COMPANY_CREATE_ADDRESS_JSON` optional JSON object
+- `COMPANY_CREATE_ADDRESS_STREET` optional
+- `COMPANY_CREATE_ADDRESS_CITY` optional
+- `COMPANY_CREATE_ADDRESS_STATE` optional
+- `COMPANY_CREATE_ADDRESS_POSTAL_CODE` optional
+- `COMPANY_CREATE_ADDRESS_COUNTRY` optional
+
+Update:
+
+- `COMPANY_UPDATE_ID`
+- `COMPANY_UPDATE_NAME` optional
+- `COMPANY_UPDATE_DESCRIPTION` optional
+- `COMPANY_UPDATE_INDUSTRY` optional
+- `COMPANY_UPDATE_PHONE_NUMBER` optional
+- `COMPANY_UPDATE_ADDRESS_JSON` optional JSON object
+- `COMPANY_UPDATE_ADDRESS_STREET` optional
+- `COMPANY_UPDATE_ADDRESS_CITY` optional
+- `COMPANY_UPDATE_ADDRESS_STATE` optional
+- `COMPANY_UPDATE_ADDRESS_POSTAL_CODE` optional
+- `COMPANY_UPDATE_ADDRESS_COUNTRY` optional
+
+## Best Use
+
+- Log in once and reuse the returned access token for all company flows.
+- Treat company ids as UUID strings, not integers.
+- Prefer address field env vars or `*_ADDRESS_JSON` over flat string addresses.
+- Use list filtering when your integration needs lightweight search without an extra lookup round-trip.

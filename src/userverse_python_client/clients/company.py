@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import EmailStr
+from uuid import UUID
 
 from sverse_generic_models.generic_response import GenericResponseModel
 from sverse_generic_models.generic_pagination import PaginatedResponse
@@ -43,8 +43,8 @@ class UverseCompanyClient(BaseClient):
 
     def get_company_by_id_or_email(
         self,
-        company_id: Optional[int] = None,
-        email: Optional[EmailStr] = None,
+        company_id: Optional[UUID | str] = None,
+        email: Optional[str] = None,
     ) -> GenericResponseModel[CompanyReadModel]:
         """Fetches a company by its ID or email."""
         params = None
@@ -69,7 +69,7 @@ class UverseCompanyClient(BaseClient):
 
     def update_company(
         self,
-        company_id: int,
+        company_id: UUID | str,
         company_update: CompanyUpdateModel,
     ) -> GenericResponseModel[CompanyReadModel]:
         """Updates an existing company with the provided data, returns the updated company model."""

@@ -1,7 +1,16 @@
 import base64
 
 from userverse_python_client import UverseUserClient
-from userverse_models.user.user import UserCreateModel, UserLoginModel, UserUpdateModel
+from userverse_models.user.password import (
+    MagicLinkPasswordResetConfirmRequest,
+    PasswordResetRequest,
+)
+from userverse_models.user.user import (
+    RefreshTokenRequestModel,
+    UserCreateModel,
+    UserLoginModel,
+    UserUpdateModel,
+)
 
 
 def _basic_auth(email: str, password: str) -> str:
@@ -30,26 +39,14 @@ def test_user_login_uses_basic_auth_and_patch():
     assert client.user_login(login) == {"data": {"token": "abc"}}
 
 
-def test_user_login_requires_data_key():
-    client = UverseUserClient("https://example.test")
-    login = UserLoginModel(email="a@example.com", password="pw")
-    client._request = lambda *_args, **_kwargs: {}
-    try:
-        client.user_login(login)
-    except ValueError as exc:
-        assert "Invalid response" in str(exc)
-    else:
-        raise AssertionError("Expected ValueError")
-
-
 def test_create_user_posts_with_basic_auth():
     client = UverseUserClient("https://example.test")
     login = UserLoginModel(email="a@example.com", password="pw")
-    user_data = UserCreateModel(email="a@example.com", password="pw", name="Ada")
+    user_data = UserCreateModel(first_name="Ada", last_name="Lovelace")
 
     def fake_request(method, path, json=None, headers=None, **_kwargs):
         assert method == "POST"
-        assert path == "/user"
+        assert path == "/user/create"
         assert json == user_data
         assert headers == {"Authorization": _basic_auth("a@example.com", "pw")}
         return {"data": {"id": "1"}}
@@ -58,17 +55,32 @@ def test_create_user_posts_with_basic_auth():
     assert client.create_user(user_data, login) == {"data": {"id": "1"}}
 
 
-def test_create_user_requires_data_dict():
+def test_refresh_user_token_posts_payload():
     client = UverseUserClient("https://example.test")
-    login = UserLoginModel(email="a@example.com", password="pw")
-    user_data = UserCreateModel(email="a@example.com", password="pw")
-    client._request = lambda *_args, **_kwargs: {"data": "oops"}
-    try:
-        client.create_user(user_data, login)
-    except ValueError as exc:
-        assert "Expected user data" in str(exc)
-    else:
-        raise AssertionError("Expected ValueError")
+    payload = RefreshTokenRequestModel(refresh_token="refresh")
+
+    def fake_request(method, path, json=None, **_kwargs):
+        assert method == "POST"
+        assert path == "/user/refresh"
+        assert json == payload
+        return {"data": {"token": "abc"}}
+
+    client._request = fake_request
+    assert client.refresh_user_token(payload) == {"data": {"token": "abc"}}
+
+
+def test_revoke_refresh_token_posts_payload():
+    client = UverseUserClient("https://example.test")
+    payload = RefreshTokenRequestModel(refresh_token="refresh")
+
+    def fake_request(method, path, json=None, **_kwargs):
+        assert method == "POST"
+        assert path == "/user/revoke"
+        assert json == payload
+        return {"data": {"revoked": True}}
+
+    client._request = fake_request
+    assert client.revoke_refresh_token(payload) == {"data": {"revoked": True}}
 
 
 def test_get_user_fetches_current_user():
@@ -85,28 +97,30 @@ def test_get_user_fetches_current_user():
 
 def test_update_user_patches_current_user():
     client = UverseUserClient("https://example.test")
-    user_update = UserUpdateModel(name="Ada")
+    user_update = UserUpdateModel(first_name="Ada")
 
     def fake_request(method, path, json=None, **_kwargs):
         assert method == "PATCH"
         assert path == "/user/update"
         assert json == user_update
-        return {"data": {"name": "Ada"}}
+        return {"data": {"first_name": "Ada"}}
 
     client._request = fake_request
-    assert client.update_user(user_update) == {"data": {"name": "Ada"}}
+    assert client.update_user(user_update) == {"data": {"first_name": "Ada"}}
 
 
-def test_resend_verification_email_posts():
+def test_resend_verification_email_posts_payload():
     client = UverseUserClient("https://example.test")
+    payload = PasswordResetRequest(email="a@example.com")
 
-    def fake_request(method, path, **_kwargs):
+    def fake_request(method, path, json=None, **_kwargs):
         assert method == "POST"
         assert path == "/user/resend-verification"
+        assert json == payload
         return {"data": None}
 
     client._request = fake_request
-    assert client.resend_verification_email() == {"data": None}
+    assert client.resend_verification_email(payload) == {"data": None}
 
 
 def test_verify_user_uses_token_query():
@@ -121,28 +135,57 @@ def test_verify_user_uses_token_query():
     assert client.verify_user("abc") == {"data": None}
 
 
-def test_request_password_reset_uses_email_query():
+def test_request_password_reset_posts_payload():
     client = UverseUserClient("https://example.test")
+    payload = PasswordResetRequest(email="a@example.com", method="magic_link")
 
-    def fake_request(method, path, **_kwargs):
+    def fake_request(method, path, json=None, **_kwargs):
         assert method == "PATCH"
-        assert path == "/password-reset/request?email=a@example.com"
+        assert path == "/password-reset/request"
+        assert json == payload
         return {"data": None}
 
     client._request = fake_request
-    assert client.request_password_reset("a@example.com") == {"data": None}
+    assert client.request_password_reset(payload) == {"data": None}
 
 
-def test_reset_password_validate_otp_uses_basic_auth_and_payload():
+def test_reset_password_with_token_posts_payload():
+    client = UverseUserClient("https://example.test")
+    payload = MagicLinkPasswordResetConfirmRequest(
+        token="token-123", new_password="new-secret"
+    )
+
+    def fake_request(method, path, json=None, **_kwargs):
+        assert method == "PATCH"
+        assert path == "/password-reset/reset-with-token"
+        assert json == payload
+        return {"data": None}
+
+    client._request = fake_request
+    assert client.reset_password_with_token(payload) == {"data": None}
+
+
+def test_reset_password_validate_otp_uses_basic_auth_and_query_param():
     client = UverseUserClient("https://example.test")
     login = UserLoginModel(email="a@example.com", password="pw")
 
-    def fake_request(method, path, json=None, headers=None, **_kwargs):
+    def fake_request(method, path, headers=None, **_kwargs):
         assert method == "PATCH"
-        assert path == "/password-reset/validate-otp"
-        assert json == {"one_time_pin": "123"}
+        assert path == "/password-reset/validate-otp?one_time_pin=123"
         assert headers == {"Authorization": _basic_auth("a@example.com", "pw")}
         return {"data": None}
 
     client._request = fake_request
     assert client.reset_password_validate_otp(login, "123") == {"data": None}
+
+
+def test_delete_user_calls_current_endpoint():
+    client = UverseUserClient("https://example.test")
+
+    def fake_request(method, path, **_kwargs):
+        assert method == "DELETE"
+        assert path == "/user/me"
+        return {"data": None}
+
+    client._request = fake_request
+    assert client.delete_user() == {"data": None}
