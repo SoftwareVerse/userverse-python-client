@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from sverse_generic_models.generic_response import GenericResponseModel
 from sverse_generic_models.generic_pagination import PaginatedResponse
 from userverse_models.company.roles import (
@@ -23,7 +25,7 @@ class UverseCompanyUserRolesManagement(BaseClient):
 
     def get_company_roles(
         self,
-        company_id: int,
+        company_id: UUID | str,
         query_params: RoleQueryParamsModel = RoleQueryParamsModel(),
     ) -> GenericResponseModel[PaginatedResponse[RoleReadModel]]:
         """Fetches a list of roles associated with the company."""
@@ -46,14 +48,14 @@ class UverseCompanyUserRolesManagement(BaseClient):
 
     def create_company_role(
         self,
-        company_id: int,
+        company_id: UUID | str,
         role_data: RoleCreateModel,
     ) -> GenericResponseModel[RoleReadModel]:
         """Creates a new role for the specified company."""
         payload = role_data.model_dump(exclude_none=True)
         response = self._request(
             "POST",
-            f"/company/{company_id}/roles",
+            f"/company/{company_id}/role",
             json=payload,
         )
 
@@ -68,15 +70,15 @@ class UverseCompanyUserRolesManagement(BaseClient):
 
     def update_company_role(
         self,
-        company_id: int,
+        company_id: UUID | str,
         role_name: str,
         role_data: RoleUpdateModel,
     ) -> GenericResponseModel[RoleReadModel]:
         """Updates an existing role for the specified company."""
         payload = role_data.model_dump(exclude_none=True)
         response = self._request(
-            "PUT",
-            f"/company/{company_id}/roles/{role_name}",
+            "PATCH",
+            f"/company/{company_id}/role/{role_name}",
             json=payload,
         )
 
@@ -91,14 +93,14 @@ class UverseCompanyUserRolesManagement(BaseClient):
 
     def delete_company_role(
         self,
-        company_id: int,
+        company_id: UUID | str,
         role_delete_data: RoleDeleteModel,
-    ) -> GenericResponseModel[None]:
+    ) -> GenericResponseModel[dict]:
         """Deletes a role from the specified company, replacing it with another role."""
         payload = role_delete_data.model_dump(exclude_none=True)
         response = self._request(
             "DELETE",
-            f"/company/{company_id}/roles",
+            f"/company/{company_id}/role",
             json=payload,
         )
 
@@ -109,4 +111,4 @@ class UverseCompanyUserRolesManagement(BaseClient):
         if not isinstance(data, dict):
             raise ValueError(f"Expected response data to be a dict, got {type(data)}")
 
-        return GenericResponseModel[None].model_validate(response)
+        return GenericResponseModel[dict].model_validate(response)

@@ -1,4 +1,4 @@
-"""Demo script showing how to use the company client in userverse_python_client."""
+"""Demo script showing how to use the company client."""
 
 import argparse
 import json
@@ -7,21 +7,20 @@ import sys
 from pathlib import Path
 from typing import Any, Callable, Optional, Tuple
 
-# Allow running the example without installing the package first.
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-from userverse_models.user.user import UserLoginModel  # noqa: E402
+from userverse_models.company.address import CompanyAddressModel  # noqa: E402
 from userverse_models.company.company import (  # noqa: E402
     CompanyCreateModel,
-    CompanyUpdateModel,
     CompanyQueryParamsModel,
+    CompanyUpdateModel,
 )
-from userverse_python_client import UverseUserClient, UverseCompanyClient  # noqa: E402
+from userverse_models.user.user import UserLoginModel  # noqa: E402
+from userverse_python_client import UverseCompanyClient, UverseUserClient  # noqa: E402
 from userverse_python_client.error_model import ClientErrorModel  # noqa: E402
 
-BASE_URL = "https://apps.oxillium-api.co.za/userverse"
+BASE_URL = os.getenv("USERVERSE_BASE_URL", "https://apps.oxillium-api.co.za/userverse")
 USE_ENV_VALUE = object()
-
 
 ClientProvider = Callable[[], Any]
 ActionFunction = Callable[[Any], Any]
@@ -32,24 +31,6 @@ def require_env(name: str) -> str:
     if not value:
         raise ValueError(f"Missing required env var: {name}")
     return value
-
-
-def require_int_env(name: str) -> int:
-    raw_value = require_env(name)
-    try:
-        return int(raw_value)
-    except ValueError as exc:
-        raise ValueError(f"{name} must be an integer, got '{raw_value}'") from exc
-
-
-def optional_int_env(name: str) -> Optional[int]:
-    raw_value = os.getenv(name)
-    if raw_value is None or raw_value == "":
-        return None
-    try:
-        return int(raw_value)
-    except ValueError as exc:
-        raise ValueError(f"{name} must be an integer, got '{raw_value}'") from exc
 
 
 def build_user_client() -> UverseUserClient:
@@ -64,16 +45,16 @@ def log_response(label: str, response: Any) -> None:
     print(f"{label} Response:", response)
     dump_method = getattr(response, "model_dump", None)
     if callable(dump_method):
-        print(f"{label} Response (dict):")
-        print(json.dumps(dump_method(), indent=2, default=str))
+        print(json.dumps(dump_method(mode="json"), indent=2))
 
 
 def login_user(client: UverseUserClient) -> str:
-    login_model = UserLoginModel(
-        email=require_env("USER_EMAIL"),
-        password=require_env("USER_PASSWORD"),
+    response = client.user_login(
+        UserLoginModel(
+            email=require_env("USER_EMAIL"),
+            password=require_env("USER_PASSWORD"),
+        )
     )
-    response = client.user_login(login_model)
     client.set_access_token(response.data.access_token)
     log_response("Login", response)
     return response.data.access_token
@@ -81,15 +62,13 @@ def login_user(client: UverseUserClient) -> str:
 
 def build_query_params() -> CompanyQueryParamsModel:
     params: dict[str, object] = {}
-
-    limit = optional_int_env("COMPANY_QUERY_LIMIT")
-    if limit is not None:
-        params["limit"] = limit
-
-    page = optional_int_env("COMPANY_QUERY_PAGE")
-    if page is not None:
-        params["page"] = page
-
+    for int_field, env_name in [
+        ("limit", "COMPANY_QUERY_LIMIT"),
+        ("page", "COMPANY_QUERY_PAGE"),
+    ]:
+        value = os.getenv(env_name)
+        if value:
+            params[int_field] = int(value)
     for field, env_name in [
         ("role_name", "COMPANY_QUERY_ROLE_NAME"),
         ("name", "COMPANY_QUERY_NAME"),
@@ -100,70 +79,83 @@ def build_query_params() -> CompanyQueryParamsModel:
         value = os.getenv(env_name)
         if value:
             params[field] = value
-
     return CompanyQueryParamsModel(**params)
 
 
+def parse_address(prefix: str) -> Optional[CompanyAddressModel]:
+    raw_json = os.getenv(f"{prefix}_ADDRESS_JSON")
+    if raw_json:
+        return CompanyAddressModel.model_validate_json(raw_json)
+
+    data = {
+        "street": os.getenv(f"{prefix}_ADDRESS_STREET"),
+        "city": os.getenv(f"{prefix}_ADDRESS_CITY"),
+        "state": os.getenv(f"{prefix}_ADDRESS_STATE"),
+        "postal_code": os.getenv(f"{prefix}_ADDRESS_POSTAL_CODE"),
+        "country": os.getenv(f"{prefix}_ADDRESS_COUNTRY"),
+    }
+    data = {key: value for key, value in data.items() if value}
+    return CompanyAddressModel(**data) if data else None
+
+
 def list_user_companies(client: UverseCompanyClient) -> None:
-    params = build_query_params()
-    response = client.get_user_companies(params)
-    log_response("List Companies", response)
+    log_response("List Companies", client.get_user_companies(build_query_params()))
 
 
 def get_company_by_id(
     client: UverseCompanyClient, company_id_value: object = USE_ENV_VALUE
 ) -> None:
-    if company_id_value is USE_ENV_VALUE:
-        company_id = require_int_env("COMPANY_LOOKUP_ID")
-    else:
-        company_id = int(company_id_value)
-    response = client.get_company_by_id_or_email(company_id=company_id)
-    log_response("Company Lookup (ID)", response)
+    company_id = (
+        require_env("COMPANY_LOOKUP_ID")
+        if company_id_value is USE_ENV_VALUE
+        else str(company_id_value)
+    )
+    log_response(
+        "Company Lookup (ID)", client.get_company_by_id_or_email(company_id=company_id)
+    )
 
 
 def get_company_by_email(
     client: UverseCompanyClient, email_value: object = USE_ENV_VALUE
 ) -> None:
-    if email_value is USE_ENV_VALUE:
-        email = require_env("COMPANY_LOOKUP_EMAIL")
-    else:
-        email = str(email_value)
-    response = client.get_company_by_id_or_email(email=email)
-    log_response("Company Lookup (Email)", response)
+    email = (
+        require_env("COMPANY_LOOKUP_EMAIL")
+        if email_value is USE_ENV_VALUE
+        else str(email_value)
+    )
+    log_response(
+        "Company Lookup (Email)", client.get_company_by_id_or_email(email=email)
+    )
 
 
 def create_company(client: UverseCompanyClient) -> None:
-    company = CompanyCreateModel(
+    payload = CompanyCreateModel(
         name=require_env("COMPANY_CREATE_NAME"),
         email=require_env("COMPANY_CREATE_EMAIL"),
         description=os.getenv("COMPANY_CREATE_DESCRIPTION"),
         industry=os.getenv("COMPANY_CREATE_INDUSTRY"),
         phone_number=os.getenv("COMPANY_CREATE_PHONE_NUMBER"),
-        address=os.getenv("COMPANY_CREATE_ADDRESS"),
+        address=parse_address("COMPANY_CREATE"),
     )
-    response = client.create_company(company)
-    log_response("Create Company", response)
+    log_response("Create Company", client.create_company(payload))
 
 
 def update_company(client: UverseCompanyClient) -> None:
-    company_id = require_int_env("COMPANY_UPDATE_ID")
-    company_update = CompanyUpdateModel(
+    company_id = require_env("COMPANY_UPDATE_ID")
+    payload = CompanyUpdateModel(
         name=os.getenv("COMPANY_UPDATE_NAME"),
         description=os.getenv("COMPANY_UPDATE_DESCRIPTION"),
         industry=os.getenv("COMPANY_UPDATE_INDUSTRY"),
         phone_number=os.getenv("COMPANY_UPDATE_PHONE_NUMBER"),
-        address=os.getenv("COMPANY_UPDATE_ADDRESS"),
+        address=parse_address("COMPANY_UPDATE"),
     )
-    if not company_update.model_dump(exclude_none=True):
-        raise ValueError("Provide at least one COMPANY_UPDATE_* env var to update.")
-    response = client.update_company(company_id, company_update)
-    log_response("Update Company", response)
+    if not payload.model_dump(exclude_none=True):
+        raise ValueError("Provide at least one COMPANY_UPDATE_* value to update.")
+    log_response("Update Company", client.update_company(company_id, payload))
 
 
 def run_action(
-    action_name: str,
-    fn: ActionFunction,
-    client_provider: ClientProvider,
+    action_name: str, fn: ActionFunction, client_provider: ClientProvider
 ) -> Tuple[bool, Any]:
     try:
         client = client_provider()
@@ -180,48 +172,20 @@ def run_action(
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Userverse company demo")
-    parser.add_argument("--login", action="store_true", help="Login user to get token")
+    parser.add_argument("--login", action="store_true")
+    parser.add_argument("--list-companies", action="store_true")
     parser.add_argument(
-        "--list-companies",
-        action="store_true",
-        help="List companies linked to the authenticated user",
-    )
-    parser.add_argument(
-        "--get-company-by-id",
-        metavar="COMPANY_ID",
-        type=int,
-        nargs="?",
-        const=USE_ENV_VALUE,
-        help=(
-            "Fetch a company by ID. Provide the ID inline (e.g. --get-company-by-id 3) "
-            "or omit the value to use COMPANY_LOOKUP_ID."
-        ),
+        "--get-company-by-id", metavar="COMPANY_ID", nargs="?", const=USE_ENV_VALUE
     )
     parser.add_argument(
         "--get-company-by-email",
         metavar="COMPANY_EMAIL",
         nargs="?",
         const=USE_ENV_VALUE,
-        help=(
-            "Fetch a company by email. Provide the email inline or omit the value to use "
-            "COMPANY_LOOKUP_EMAIL."
-        ),
     )
-    parser.add_argument(
-        "--create-company",
-        action="store_true",
-        help="Create a new company using COMPANY_CREATE_* env vars",
-    )
-    parser.add_argument(
-        "--update-company",
-        action="store_true",
-        help="Update an existing company using COMPANY_UPDATE_* env vars",
-    )
-    parser.add_argument(
-        "--all",
-        action="store_true",
-        help="Run login + list companies (requires env vars)",
-    )
+    parser.add_argument("--create-company", action="store_true")
+    parser.add_argument("--update-company", action="store_true")
+    parser.add_argument("--all", action="store_true", help="Run login + list companies")
     return parser.parse_args()
 
 
@@ -315,5 +279,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":  # pragma: no cover
-    # run with uv: uv run -m examples.company_demo --login --list-companies
     main()

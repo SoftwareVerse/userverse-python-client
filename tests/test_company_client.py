@@ -56,16 +56,17 @@ def test_get_user_companies_requires_dict_payload() -> None:
 def test_get_company_by_id_calls_endpoint() -> None:
     client = _client()
     called = {}
+    company_id = "550e8400-e29b-41d4-a716-446655440000"
 
     def fake_request(method, path, **_kwargs):
         called.update(method=method, path=path)
-        return {"data": {"id": 1}}
+        return {"data": {"id": company_id}}
 
     client._request = fake_request  # type: ignore[method-assign]
-    response = client.get_company_by_id_or_email(company_id=7)
+    response = client.get_company_by_id_or_email(company_id=company_id)
 
-    assert called == {"method": "GET", "path": "/company?company_id=7"}
-    assert response["data"]["id"] == 1
+    assert called == {"method": "GET", "path": f"/company?company_id={company_id}"}
+    assert response["data"]["id"] == company_id
 
 
 def test_get_company_by_email_calls_endpoint() -> None:

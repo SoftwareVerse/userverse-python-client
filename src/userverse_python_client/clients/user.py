@@ -1,14 +1,18 @@
 import base64
-from pydantic import EmailStr
 
 from sverse_generic_models.generic_response import GenericResponseModel
 from userverse_models.user.user import (
+    RefreshTokenRequestModel,
+    TokenRevocationResponseModel,
     UserLoginModel,
     UserUpdateModel,
     UserCreateModel,
     UserReadModel,
     TokenResponseModel,
-    UserQueryParams,
+)
+from userverse_models.user.password import (
+    MagicLinkPasswordResetConfirmRequest,
+    PasswordResetRequest,
 )
 from ..http_client_base import BaseClient
 
@@ -47,7 +51,9 @@ class UverseUserClient(BaseClient):
         )
         headers = {"Authorization": basic_auth}
 
-        response = self._request("POST", "/user", json=user_data, headers=headers)
+        response = self._request(
+            "POST", "/user/create", json=user_data, headers=headers
+        )
 
         if not response or "data" not in response:
             raise ValueError("Invalid response from create user endpoint")
@@ -57,6 +63,30 @@ class UverseUserClient(BaseClient):
             raise ValueError(f"Expected user data to be a dict, got {type(data)}")
 
         return GenericResponseModel[UserReadModel].model_validate(response)
+
+    def refresh_user_token(
+        self, payload: RefreshTokenRequestModel
+    ) -> GenericResponseModel[TokenResponseModel]:
+        """Refreshes access and refresh tokens using a refresh token."""
+        response = self._request("POST", "/user/refresh", json=payload)
+
+        if not response or "data" not in response:
+            raise ValueError("Invalid response from refresh user token endpoint")
+
+        return GenericResponseModel[TokenResponseModel].model_validate(response)
+
+    def revoke_refresh_token(
+        self, payload: RefreshTokenRequestModel
+    ) -> GenericResponseModel[TokenRevocationResponseModel]:
+        """Revokes the provided refresh token family."""
+        response = self._request("POST", "/user/revoke", json=payload)
+
+        if not response or "data" not in response:
+            raise ValueError("Invalid response from revoke refresh token endpoint")
+
+        return GenericResponseModel[TokenRevocationResponseModel].model_validate(
+            response
+        )
 
     def get_user(self) -> GenericResponseModel[UserReadModel]:
         """Retrieves the current user's details. JWT token must be set in the client."""
@@ -79,9 +109,11 @@ class UverseUserClient(BaseClient):
         return GenericResponseModel[UserReadModel].model_validate(response)
 
     # Account verification methods
-    def resend_verification_email(self) -> GenericResponseModel[None]:
-        """Resends the verification email to current user. JWT token must be set in the client."""
-        response = self._request("POST", "/user/resend-verification")
+    def resend_verification_email(
+        self, payload: PasswordResetRequest
+    ) -> GenericResponseModel[None]:
+        """Resends the verification email to the provided email address."""
+        response = self._request("POST", "/user/resend-verification", json=payload)
         if not response:
             raise ValueError("No data found in response")
         if not isinstance(response, dict):
@@ -103,10 +135,26 @@ class UverseUserClient(BaseClient):
         return GenericResponseModel[None].model_validate(response)
 
     # Password reset methods
-    def request_password_reset(self, email: EmailStr) -> GenericResponseModel[None]:
-        """Requests a password reset email to be sent to the user."""
-        path = self._build_path_with_query("/password-reset/request", {"email": email})
-        response = self._request("PATCH", path)
+    def request_password_reset(
+        self, payload: PasswordResetRequest
+    ) -> GenericResponseModel[None]:
+        """Requests a password reset using the configured reset method."""
+        response = self._request("PATCH", "/password-reset/request", json=payload)
+        if not response:
+            raise ValueError("No data found in response")
+        if not isinstance(response, dict):
+            raise ValueError(
+                f"Expected response data to be a dict, got {type(response)}"
+            )
+        return GenericResponseModel[None].model_validate(response)
+
+    def reset_password_with_token(
+        self, payload: MagicLinkPasswordResetConfirmRequest
+    ) -> GenericResponseModel[None]:
+        """Resets a password using a magic-link token."""
+        response = self._request(
+            "PATCH", "/password-reset/reset-with-token", json=payload
+        )
         if not response:
             raise ValueError("No data found in response")
         if not isinstance(response, dict):
@@ -123,11 +171,11 @@ class UverseUserClient(BaseClient):
             user_credentials.email, user_credentials.password
         )
         headers = {"Authorization": basic_auth}
-        json_body = {"one_time_pin": one_time_pin}
-
-        response = self._request(
-            "PATCH", "/password-reset/validate-otp", json=json_body, headers=headers
+        path = self._build_path_with_query(
+            "/password-reset/validate-otp", {"one_time_pin": one_time_pin}
         )
+
+        response = self._request("PATCH", path, headers=headers)
 
         if not response:
             raise ValueError("No data found in response")
@@ -136,4 +184,15 @@ class UverseUserClient(BaseClient):
                 f"Expected response data to be a dict, got {type(response)}"
             )
 
+        return GenericResponseModel[None].model_validate(response)
+
+    def delete_user(self) -> GenericResponseModel[None]:
+        """Deletes the authenticated user's account."""
+        response = self._request("DELETE", "/user/me")
+        if not response:
+            raise ValueError("No data found in response")
+        if not isinstance(response, dict):
+            raise ValueError(
+                f"Expected response data to be a dict, got {type(response)}"
+            )
         return GenericResponseModel[None].model_validate(response)

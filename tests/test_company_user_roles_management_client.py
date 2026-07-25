@@ -8,7 +8,6 @@ from userverse_models.company.roles import (
     RoleUpdateModel,
     RoleDeleteModel,
     RoleQueryParamsModel,
-    CompanyDefaultRoles,
 )
 
 
@@ -31,7 +30,7 @@ def test_get_company_roles_calls_endpoint() -> None:
         }
 
     client._request = fake_request  # type: ignore[method-assign]
-    response = client.get_company_roles(company_id=3, query_params=params)
+    response = client.get_company_roles(company_id="3", query_params=params)
 
     assert called == {
         "method": "GET",
@@ -50,7 +49,7 @@ def test_get_company_roles_requires_dict_payload() -> None:
 
     client._request = fake_request  # type: ignore[method-assign]
     with pytest.raises(ValueError, match="role pagination data"):
-        client.get_company_roles(1, params)
+        client.get_company_roles("1", params)
 
 
 def test_create_company_role_posts_payload() -> None:
@@ -63,11 +62,11 @@ def test_create_company_role_posts_payload() -> None:
         return {"data": {"name": "Editor"}}
 
     client._request = fake_request  # type: ignore[method-assign]
-    response = client.create_company_role(2, role)
+    response = client.create_company_role("2", role)
 
     assert called == {
         "method": "POST",
-        "path": "/company/2/roles",
+        "path": "/company/2/role",
         "json": role.model_dump(exclude_none=True),
     }
     assert response["data"]["name"] == "Editor"
@@ -82,10 +81,10 @@ def test_create_company_role_requires_dict_payload() -> None:
 
     client._request = fake_request  # type: ignore[method-assign]
     with pytest.raises(ValueError, match="Expected role data"):
-        client.create_company_role(2, role)
+        client.create_company_role("2", role)
 
 
-def test_update_company_role_puts_payload() -> None:
+def test_update_company_role_patches_payload() -> None:
     client = _client()
     role = RoleUpdateModel(description="Read-only")
     called: dict[str, object] = {}
@@ -95,11 +94,11 @@ def test_update_company_role_puts_payload() -> None:
         return {"data": {"name": "Viewer", "description": "Read-only"}}
 
     client._request = fake_request  # type: ignore[method-assign]
-    response = client.update_company_role(5, "Viewer", role)
+    response = client.update_company_role("5", "Viewer", role)
 
     assert called == {
-        "method": "PUT",
-        "path": "/company/5/roles/Viewer",
+        "method": "PATCH",
+        "path": "/company/5/role/Viewer",
         "json": role.model_dump(exclude_none=True),
     }
     assert response["data"]["description"] == "Read-only"
@@ -114,7 +113,7 @@ def test_update_company_role_requires_dict_payload() -> None:
 
     client._request = fake_request  # type: ignore[method-assign]
     with pytest.raises(ValueError, match="Expected role data"):
-        client.update_company_role(1, "Viewer", role)
+        client.update_company_role("1", "Viewer", role)
 
 
 def test_delete_company_role_sends_payload() -> None:
@@ -129,11 +128,11 @@ def test_delete_company_role_sends_payload() -> None:
         return {"data": {"status": "ok"}}
 
     client._request = fake_request  # type: ignore[method-assign]
-    response = client.delete_company_role(8, delete_model)
+    response = client.delete_company_role("8", delete_model)
 
     assert called == {
         "method": "DELETE",
-        "path": "/company/8/roles",
+        "path": "/company/8/role",
         "json": delete_model.model_dump(exclude_none=True),
     }
     assert response["data"]["status"] == "ok"
@@ -150,11 +149,12 @@ def test_delete_company_role_requires_dict_payload() -> None:
 
     client._request = fake_request  # type: ignore[method-assign]
     with pytest.raises(ValueError, match="Expected response data"):
-        client.delete_company_role(1, delete_model)
+        client.delete_company_role("1", delete_model)
 
 
 def test_list_default_roles_returns_names() -> None:
     roles = UverseCompanyUserRolesManagement.list_default_roles()
 
+    assert "Owner" in roles
     assert "Administrator" in roles
     assert all(isinstance(role, str) for role in roles)

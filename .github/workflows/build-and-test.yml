@@ -1,14 +1,11 @@
 name: CI - Integration Tests with uv
 
 on:
-  # push:
-  #   branches: [main]
-
   pull_request:
     branches: [main]
 
 permissions:
-  contents: write  # Required to allow pushing commits/tags
+  contents: read
 
 jobs:
   test:
@@ -35,37 +32,10 @@ jobs:
           source .venv/bin/activate
           uv sync
 
-      - name: Auto-format code with Black
+      - name: Check formatting with Black
         run: |
           source .venv/bin/activate
-          black .
-
-      - name: Set up Git credentials
-        run: |
-          git config user.name "github-actions"
-          git config user.email "github-actions@github.com"
-          git remote set-url origin https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}
-
-      - name: Commit and Push formatting changes
-        if: github.event.pull_request.head.repo.full_name == github.repository
-        env:
-          BRANCH_NAME: ${{ github.head_ref }}
-        run: |
-          echo "Pushing to PR branch: ${BRANCH_NAME}"
-
-          # Ensure we have the branch locally (checkout in PR runs can be detached)
-          git fetch origin "${BRANCH_NAME}:${BRANCH_NAME}"
-          git checkout "${BRANCH_NAME}"
-          git pull origin "${BRANCH_NAME}"
-
-          git add .
-          if ! git diff --cached --quiet; then
-            git commit -m "style: auto-format code with Black"
-            git push origin "${BRANCH_NAME}"
-          else
-            echo "No formatting changes to commit"
-          fi
-
+          black --check .
 
       - name: Run tests with coverage (pytest)
         run: |
@@ -79,7 +49,6 @@ jobs:
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v5
         with:
-          token: ${{ secrets.CODECOV_TOKEN }}
           slug: SoftwareVerse/userverse-python-client
           files: coverage_reports/coverage.xml
-          fail_ci_if_error: true
+          fail_ci_if_error: false

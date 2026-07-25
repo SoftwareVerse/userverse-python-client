@@ -1,91 +1,114 @@
-Company user management demo
+## Company User Management Demo
 
-`examples/company_user_management_demo.py` demonstrates how to work with the
-company user endpoints exposed by `UverseCompanyUserManagementClient`. The script
-authenticates a user first (via `UverseUserClient`) and then uses the returned
-token for every company user request.
+`examples/company_user_management_demo.py` demonstrates `UverseCompanyUserManagementClient`.
 
-Running the demo
+It covers:
 
-Every action is toggled with a CLI flag and reads its data from environment
-variables. Missing required env vars cause that action to be skipped with a
-message so you can focus on a single flow at a time.
+- list company users
+- add a user to a company by email
+- update a company user's role
+- remove a user from a company
+
+## Run It
 
 From the repo root:
 
-```
+```bash
 uv run -m examples.company_user_management_demo --help
 ```
 
-Common usage
+Use a local API:
 
-Login and list company users:
-
+```bash
+USERVERSE_BASE_URL="http://localhost:8500/userverse" \
+uv run -m examples.company_user_management_demo --help
 ```
+
+## Common Flows
+
+List company users:
+
+```bash
+USERVERSE_BASE_URL="http://localhost:8500/userverse" \
 USER_EMAIL="you@example.com" USER_PASSWORD="secret" \
-COMPANY_USER_COMPANY_ID=123 \
+COMPANY_USER_COMPANY_ID="550e8400-e29b-41d4-a716-446655440000" \
 uv run -m examples.company_user_management_demo --login --list-users
 ```
 
 Add a user to a company:
 
-```
+```bash
+USERVERSE_BASE_URL="http://localhost:8500/userverse" \
 USER_EMAIL="you@example.com" USER_PASSWORD="secret" \
-COMPANY_USER_COMPANY_ID=123 COMPANY_USER_ADD_USER_ID=456 \
-COMPANY_USER_ADD_ROLE_NAME="admin" \
+COMPANY_USER_COMPANY_ID="550e8400-e29b-41d4-a716-446655440000" \
+COMPANY_USER_ADD_EMAIL="member@example.com" COMPANY_USER_ADD_ROLE="Viewer" \
 uv run -m examples.company_user_management_demo --login --add-user
 ```
 
-Delete a user from a company:
+Update a member role:
 
-```
+```bash
+USERVERSE_BASE_URL="http://localhost:8500/userverse" \
 USER_EMAIL="you@example.com" USER_PASSWORD="secret" \
-COMPANY_USER_COMPANY_ID=123 COMPANY_USER_DELETE_USER_ID=456 \
+COMPANY_USER_COMPANY_ID="550e8400-e29b-41d4-a716-446655440000" \
+COMPANY_USER_UPDATE_USER_ID="0d4f2f95-f7ca-4cb7-b6eb-ff4c7c43d9c6" \
+COMPANY_USER_UPDATE_ROLE="Administrator" \
+uv run -m examples.company_user_management_demo --login --update-user-role
+```
+
+Remove a user from a company:
+
+```bash
+USERVERSE_BASE_URL="http://localhost:8500/userverse" \
+USER_EMAIL="you@example.com" USER_PASSWORD="secret" \
+COMPANY_USER_COMPANY_ID="550e8400-e29b-41d4-a716-446655440000" \
+COMPANY_USER_DELETE_USER_ID="0d4f2f95-f7ca-4cb7-b6eb-ff4c7c43d9c6" \
 uv run -m examples.company_user_management_demo --login --delete-user
 ```
 
-Available flags
+## Flags
 
-- --login
-- --list-users
-- --add-user
-- --delete-user
-- --all (runs `--login --list-users`)
+- `--login`
+- `--list-users`
+- `--add-user`
+- `--update-user-role`
+- `--delete-user`
+- `--all`
 
-Client methods covered
-
-- user_login (fetches the JWT used by the company user client)
-- list_company_users
-- add_user_to_company
-- delete_user_from_company
-
-Environment variables
-
-Login:
-- USER_EMAIL
-- USER_PASSWORD
+## Environment Variables
 
 Shared:
-- COMPANY_USER_COMPANY_ID (required for every company user action)
 
-List users (optional filters):
-- COMPANY_USER_QUERY_LIMIT
-- COMPANY_USER_QUERY_PAGE
-- COMPANY_USER_QUERY_ROLE_NAME
-- COMPANY_USER_QUERY_EMAIL
+- `USERVERSE_BASE_URL` optional
+- `USER_EMAIL`
+- `USER_PASSWORD`
+- `COMPANY_USER_COMPANY_ID`
+
+List filters:
+
+- `COMPANY_USER_QUERY_LIMIT`
+- `COMPANY_USER_QUERY_PAGE`
+- `COMPANY_USER_QUERY_ROLE_NAME`
+- `COMPANY_USER_QUERY_FIRST_NAME`
+- `COMPANY_USER_QUERY_LAST_NAME`
+- `COMPANY_USER_QUERY_EMAIL`
 
 Add user:
-- COMPANY_USER_ADD_USER_ID
-- COMPANY_USER_ADD_ROLE_NAME (optional)
+
+- `COMPANY_USER_ADD_EMAIL`
+- `COMPANY_USER_ADD_ROLE` optional, defaults to `Viewer`
+
+Update role:
+
+- `COMPANY_USER_UPDATE_USER_ID`
+- `COMPANY_USER_UPDATE_ROLE`
 
 Delete user:
-- COMPANY_USER_DELETE_USER_ID
 
-Notes
+- `COMPANY_USER_DELETE_USER_ID`
 
-- All company user actions require a logged-in user. Pass `--login` (or `--all`)
-  and ensure the login env vars are set.
-- The script builds the `UverseCompanyUserManagementClient` only after login
-  succeeds so the Authorization header always uses the latest access token.
-- Company user endpoints expect real domains/emails; avoid `.test`, `.example`,
-  `.invalid`, or `.localhost` to prevent validation failures.
+## Best Use
+
+- Use email-based add flow when inviting or linking an existing user account to a company.
+- Use role updates instead of remove-and-readd when only authorization changes.
+- Treat both `COMPANY_USER_COMPANY_ID` and user ids as UUID strings.
