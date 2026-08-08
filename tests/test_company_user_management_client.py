@@ -27,7 +27,11 @@ def test_add_user_to_company_posts_payload() -> None:
             "data": {
                 "id": "1",
                 "email": "user@example.com",
-                "role_name": "Administrator",
+                "role": {
+                    "id": "role-1",
+                    "name": "Administrator",
+                    "permissions": [],
+                },
             }
         }
 
@@ -63,13 +67,19 @@ def test_delete_user_from_company_calls_current_endpoint() -> None:
 
     def fake_request(method, path, **_kwargs):
         called.update(method=method, path=path)
-        return {"data": {"id": "3", "email": "user@example.com", "role_name": "Viewer"}}
+        return {
+            "data": {
+                "id": "3",
+                "email": "user@example.com",
+                "role": {"id": "role-1", "name": "Viewer", "permissions": []},
+            }
+        }
 
     client._request = fake_request  # type: ignore[method-assign]
     response = client.delete_user_from_company(company_id="7", user_id="3")
 
     assert called == {"method": "DELETE", "path": "/company/7/user/3"}
-    assert response["data"]["role_name"] == "Viewer"
+    assert response["data"]["role"]["name"] == "Viewer"
 
 
 def test_delete_user_from_company_requires_dict_payload() -> None:
@@ -90,7 +100,13 @@ def test_update_user_role_calls_current_endpoint() -> None:
 
     def fake_request(method, path, json=None, **_kwargs):
         called.update(method=method, path=path, json=json)
-        return {"data": {"id": "3", "email": "user@example.com", "role_name": "Owner"}}
+        return {
+            "data": {
+                "id": "3",
+                "email": "user@example.com",
+                "role": {"id": "role-2", "name": "Owner", "permissions": []},
+            }
+        }
 
     client._request = fake_request  # type: ignore[method-assign]
     response = client.update_user_role("7", "3", update_model)
@@ -100,7 +116,7 @@ def test_update_user_role_calls_current_endpoint() -> None:
         "path": "/company/7/user/3",
         "json": update_model.model_dump(exclude_none=True),
     }
-    assert response["data"]["role_name"] == "Owner"
+    assert response["data"]["role"]["name"] == "Owner"
 
 
 def test_update_user_role_requires_dict_payload() -> None:
@@ -124,7 +140,17 @@ def test_list_company_users_calls_endpoint() -> None:
         called.update(method=method, path=path, params=params)
         return {
             "data": {
-                "records": [{"id": "9", "email": "member@example.com"}],
+                "records": [
+                    {
+                        "id": "9",
+                        "email": "member@example.com",
+                        "role": {
+                            "id": "role-3",
+                            "name": "Viewer",
+                            "permissions": [],
+                        },
+                    }
+                ],
                 "pagination": {"limit": 25, "current_page": 2},
             }
         }

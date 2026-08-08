@@ -1,5 +1,7 @@
 import base64
 
+import pytest
+
 from userverse_python_client import UverseUserClient
 from userverse_models.user.password import (
     MagicLinkPasswordResetConfirmRequest,
@@ -119,6 +121,37 @@ def test_get_user_fetches_current_user():
 
     client._request = fake_request
     assert client.get_user() == {"data": {"id": "1"}}
+
+
+def test_get_user_permissions_calls_current_endpoint():
+    client = UverseUserClient("https://example.test")
+    called = {}
+
+    def fake_request(method, path, **_kwargs):
+        called.update(method=method, path=path)
+        return {
+            "data": [
+                {
+                    "id": "permission-1",
+                    "name": "company.read",
+                    "scope": "global",
+                }
+            ]
+        }
+
+    client._request = fake_request
+    response = client.get_user_permissions()
+
+    assert called == {"method": "GET", "path": "/user/permissions"}
+    assert response["data"][0]["name"] == "company.read"
+
+
+def test_get_user_permissions_requires_list_data():
+    client = UverseUserClient("https://example.test")
+    client._request = lambda *_args, **_kwargs: {"data": {}}
+
+    with pytest.raises(ValueError, match="permissions data to be a list"):
+        client.get_user_permissions()
 
 
 def test_update_user_patches_current_user():

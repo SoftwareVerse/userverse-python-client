@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import sys
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 from types import ModuleType
 from typing import Any
@@ -129,6 +129,11 @@ class _CompanyReadModel:
 
 
 @dataclass
+class _UserCompanyReadModel(_CompanyReadModel):
+    role: object | None = None
+
+
+@dataclass
 class _CompanyQueryParamsModel(_ModelDumpMixin):
     limit: int | None = None
     page: int | None = None
@@ -154,7 +159,7 @@ class _CompanyUserRoleUpdateModel(_ModelDumpMixin):
 class _CompanyUserReadModel:
     id: str | None = None
     email: str | None = None
-    role_name: str | None = None
+    role: object | None = None
 
 
 @dataclass
@@ -177,12 +182,53 @@ class _RoleDeleteModel(_ModelDumpMixin):
 
 @dataclass
 class _RoleReadModel:
+    id: str | None = None
+    name: str | None = None
+    description: str | None = None
+    permissions: list[object] = field(default_factory=list)
+
+
+@dataclass
+class _RoleAssignCompaniesModel(_ModelDumpMixin):
+    company_ids: list[str] = field(default_factory=list)
+
+
+@dataclass
+class _RoleQueryParamsModel(_ModelDumpMixin):
+    limit: int | None = None
+    page: int | None = None
+    name: str | None = None
+    description: str | None = None
+
+
+class _PermissionScope(str, Enum):
+    GLOBAL = "global"
+    COMPANY = "company"
+
+
+@dataclass
+class _PermissionCreateModel(_ModelDumpMixin):
+    name: str
+    description: str | None = None
+
+
+@dataclass
+class _PermissionUpdateModel(_ModelDumpMixin):
     name: str | None = None
     description: str | None = None
 
 
 @dataclass
-class _RoleQueryParamsModel(_ModelDumpMixin):
+class _PermissionReadModel:
+    id: str | None = None
+    name: str | None = None
+    description: str | None = None
+    scope: _PermissionScope | None = None
+    company_id: str | None = None
+
+
+@dataclass
+class _PermissionQueryParamsModel(_ModelDumpMixin):
     limit: int | None = None
     page: int | None = None
     name: str | None = None
@@ -245,6 +291,7 @@ company_company_module = _ensure_module("userverse_models.company.company")
 company_company_module.CompanyCreateModel = _CompanyCreateModel
 company_company_module.CompanyUpdateModel = _CompanyUpdateModel
 company_company_module.CompanyReadModel = _CompanyReadModel
+company_company_module.UserCompanyReadModel = _UserCompanyReadModel
 company_company_module.CompanyQueryParamsModel = _CompanyQueryParamsModel
 company_module.company = company_company_module
 company_user_module = _ensure_module("userverse_models.company.user")
@@ -258,5 +305,13 @@ company_roles_module.RoleCreateModel = _RoleCreateModel
 company_roles_module.RoleUpdateModel = _RoleUpdateModel
 company_roles_module.RoleDeleteModel = _RoleDeleteModel
 company_roles_module.RoleReadModel = _RoleReadModel
+company_roles_module.RoleAssignCompaniesModel = _RoleAssignCompaniesModel
 company_roles_module.RoleQueryParamsModel = _RoleQueryParamsModel
 company_module.roles = company_roles_module
+
+permissions_module = _ensure_module("userverse_models.permissions")
+permissions_module.PermissionScope = _PermissionScope
+permissions_module.PermissionCreateModel = _PermissionCreateModel
+permissions_module.PermissionUpdateModel = _PermissionUpdateModel
+permissions_module.PermissionReadModel = _PermissionReadModel
+permissions_module.PermissionQueryParamsModel = _PermissionQueryParamsModel

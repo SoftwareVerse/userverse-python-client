@@ -1,6 +1,7 @@
 import base64
 
 from sverse_generic_models.generic_response import GenericResponseModel
+from userverse_models.permissions import PermissionReadModel
 from userverse_models.user.user import (
     RefreshTokenRequestModel,
     TokenRevocationResponseModel,
@@ -96,6 +97,17 @@ class UverseUserClient(BaseClient):
         if not isinstance(response, dict):
             raise ValueError(f"Expected user data to be a dict, got {type(response)}")
         return GenericResponseModel[UserReadModel].model_validate(response)
+
+    def get_user_permissions(
+        self,
+    ) -> GenericResponseModel[list[PermissionReadModel]]:
+        """Return the current user's effective platform permissions."""
+        response = self._request("GET", "/user/permissions")
+        if not response or "data" not in response:
+            raise ValueError("Invalid response from get user permissions endpoint")
+        if not isinstance(response.get("data"), list):
+            raise ValueError("Expected user permissions data to be a list")
+        return GenericResponseModel[list[PermissionReadModel]].model_validate(response)
 
     def update_user(
         self, user_update: UserUpdateModel

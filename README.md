@@ -19,6 +19,9 @@ The current client surface matches the Userverse API routes for:
 - company create, lookup, and update
 - company membership listing, add, remove, and role update
 - company role listing, create, update, delete, and built-in role discovery
+- global role management and company role assignments
+- global and company-scoped permission management
+- platform role assignments and effective user permissions
 
 ## Installation
 
@@ -108,6 +111,33 @@ Use for:
 - `delete_company_role`
 - `list_default_roles`
 
+### `UverseRoleManagementClient`
+
+Use for:
+
+- `create_role`, `get_roles`, `update_role`, and `delete_role`
+- `assign_role_to_companies`
+- `assign_role_to_company` and `unassign_role_from_company`
+
+### `UversePermissionManagementClient`
+
+Use for:
+
+- global permission create, list, update, and delete operations
+- company permission create, list, update, and delete operations
+- listing, assigning, and removing permissions from global or company roles
+
+### `UversePlatformRoleManagementClient`
+
+Use for:
+
+- `get_user_roles`
+- `assign_role_to_user`
+- `remove_role_from_user`
+
+`UverseUserClient.get_user_permissions()` returns the current user's effective
+platform permissions.
+
 ## Typical Flows
 
 ### User auth and profile
@@ -186,6 +216,47 @@ company = company_client.create_company(
 )
 ```
 
+### Roles and permissions
+
+```python
+from userverse_python_client import (
+    UversePermissionManagementClient,
+    UverseRoleManagementClient,
+)
+from userverse_models.company.roles import RoleCreateModel
+from userverse_models.permissions import PermissionCreateModel
+
+role_client = UverseRoleManagementClient(
+    base_url="https://your-api-host/userverse",
+    access_token=access_token,
+)
+permission_client = UversePermissionManagementClient(
+    base_url="https://your-api-host/userverse",
+    access_token=access_token,
+)
+
+role = role_client.create_role(
+    RoleCreateModel(name="Auditor", description="Read audit records")
+)
+permission = permission_client.create_permission(
+    PermissionCreateModel(
+        name="audit.read",
+        description="Read platform audit records",
+    )
+)
+permission_client.assign_permission_to_role(role.data.id, permission.data.id)
+```
+
+## Userverse v0.7.0 response changes
+
+Company membership records now expose a structured `role` object instead of a
+`role_name` string. The role includes its id, name, description, and nested
+permissions. Likewise, `UverseCompanyClient.get_user_companies()` now returns
+`UserCompanyReadModel` records containing the requesting user's structured role.
+
+Consumers migrating from an earlier release should replace access such as
+`member.role_name` with `member.role.name`.
+
 ## Best Practices
 
 - Log in once with `UverseUserClient`, then pass the access token into the company clients.
@@ -203,6 +274,7 @@ Runnable examples live in [`examples/`](examples):
 - [`examples/company_demo_README.md`](examples/company_demo_README.md)
 - [`examples/company_user_management_demo_README.md`](examples/company_user_management_demo_README.md)
 - [`examples/company_user_roles_demo_README.md`](examples/company_user_roles_demo_README.md)
+- [`examples/rbac_demo_README.md`](examples/rbac_demo_README.md)
 
 ## Other Docs
 
@@ -213,5 +285,5 @@ Runnable examples live in [`examples/`](examples):
 Run tests:
 
 ```bash
-PYTHONPATH=src uv run pytest
+uv run python -m pytest
 ```

@@ -21,7 +21,16 @@ def test_get_user_companies_calls_endpoint() -> None:
         called.update(method=method, path=path, params=params)
         return {
             "data": {
-                "records": [{"name": "Acme"}],
+                "records": [
+                    {
+                        "name": "Acme",
+                        "role": {
+                            "id": "role-1",
+                            "name": "Owner",
+                            "permissions": [],
+                        },
+                    }
+                ],
                 "pagination": {
                     "total_records": 1,
                     "limit": 5,
@@ -40,6 +49,7 @@ def test_get_user_companies_calls_endpoint() -> None:
         "params": params.model_dump(exclude_none=True),
     }
     assert response["data"]["records"][0]["name"] == "Acme"
+    assert response["data"]["records"][0]["role"]["name"] == "Owner"
 
 
 def test_get_user_companies_requires_dict_payload() -> None:

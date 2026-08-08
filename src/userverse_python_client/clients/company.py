@@ -8,6 +8,7 @@ from userverse_models.company.company import (
     CompanyUpdateModel,
     CompanyCreateModel,
     CompanyQueryParamsModel,
+    UserCompanyReadModel,
 )
 from ..http_client_base import BaseClient
 
@@ -22,7 +23,7 @@ class UverseCompanyClient(BaseClient):
     def get_user_companies(
         self,
         query_params: CompanyQueryParamsModel = CompanyQueryParamsModel(),
-    ) -> GenericResponseModel[PaginatedResponse[CompanyReadModel]]:
+    ) -> GenericResponseModel[PaginatedResponse[UserCompanyReadModel]]:
         """Fetches a list of companies associated with the logged-in user."""
         params = query_params.model_dump(exclude_none=True)
 
@@ -37,9 +38,9 @@ class UverseCompanyClient(BaseClient):
                 f"Expected company pagination data to be a dict, got {type(data)}"
             )
 
-        return GenericResponseModel[PaginatedResponse[CompanyReadModel]].model_validate(
-            response
-        )
+        return GenericResponseModel[
+            PaginatedResponse[UserCompanyReadModel]
+        ].model_validate(response)
 
     def get_company_by_id_or_email(
         self,
